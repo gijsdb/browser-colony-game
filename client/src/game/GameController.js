@@ -1,0 +1,20 @@
+import Phaser from 'phaser';
+import MapScene from './scenes/MapScene';
+
+export default class GameController {
+    constructor(container_id) {
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            scene: MapScene,
+            scale: {
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            parent: container_id
+        };
+
+        return new Phaser.Game(config);
+    }
+}

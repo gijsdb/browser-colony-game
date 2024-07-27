@@ -7,16 +7,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { createPhaserGame } from './game';
+import GameController from './../game/GameController'
 
 const gameContainer = ref(null);
 
 onMounted(() => {
-    console.log("MOUNTED GAME")
     if (gameContainer.value) {
-        createPhaserGame(gameContainer.value.id);
+        let gc = new GameController(gameContainer.value.id)
     }
 });
 </script>
 
-<style scoped></style>

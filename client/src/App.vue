@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import Game from './Game.vue';
+import Game from './components/Game.vue';
 
 </script>
 
