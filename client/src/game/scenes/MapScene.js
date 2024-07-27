@@ -1,22 +1,6 @@
 import Phaser from 'phaser';
-import { createNoise2D } from 'simplex-noise';
 import tiles from "../../assets/tilesets/1.png";
 import TerrainGenerator from '../TerrainGenerator';
-
-const TILE_VARIANTS = {
-    grass: { id: 16 },
-    dirt: { id: 156 },
-    mountain: { id: 291 },
-    water: { id: 106 },
-    water_edge_top: { id: 46 },
-    water_edge_bottom: { id: 76 },
-    water_edge_left: { id: 60 },
-    water_edge_right: { id: 62 },
-    water_corner_topleft: { id: 45 },
-    water_corner_topright: { id: 47 },
-    water_corner_bottomleft: { id: 75 },
-    water_corner_bottomright: { id: 77 }
-};
 
 class MapScene extends Phaser.Scene {
     constructor() {
@@ -57,7 +41,7 @@ class MapScene extends Phaser.Scene {
 
         this.cameras.main.setBounds(0, 0, mapWidth * tileSize, mapHeight * tileSize);
 
-        this.setInputHandlers()
+        this.setInputHandlers(map, terrain)
     }
 
     update() {
@@ -76,7 +60,7 @@ class MapScene extends Phaser.Scene {
         }
     }
 
-    setInputHandlers() {
+    setInputHandlers(map, terrain) {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.wasd = this.input.keyboard.addKeys('W,S,A,D');
 
@@ -99,10 +83,9 @@ class MapScene extends Phaser.Scene {
                 this.tooltip.setText(`Tile: ${terrain[tileY][tileX]}, x: ${tile.x}, y ${tile.y}`)
                     .setPosition(pointer.x, pointer.y - 20)
                     .setAlpha(1);
-
                 this.borderGraphics.clear();
                 this.borderGraphics.lineStyle(2, 0x00ff00, 1);
-                this.borderGraphics.strokeRect(tileX * tileSize, tileY * tileSize, tileSize, tileSize);
+                this.borderGraphics.strokeRect(tileX * 32, tileY * 32, 32, 32); // todo dont hard code 32 as tileSize
             } else {
                 this.tooltip.setAlpha(0);
                 this.borderGraphics.clear();
