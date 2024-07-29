@@ -11,8 +11,8 @@ class MapScene extends Phaser.Scene {
         this.zoomSpeed = 0.1
         this.layers = {}
         this.tileSize = 32
-        this.mapWidth = 100
-        this.mapHeight = 100
+        this.mapWidth = 80
+        this.mapHeight = 80
     }
 
     preload() {
@@ -27,14 +27,13 @@ class MapScene extends Phaser.Scene {
             height: this.mapHeight
         })
 
-        const tileset = map.addTilesetImage('tileset-name', 'tiles')
+        const tileset = map.addTilesetImage('tileset-name', 'tiles', 32, 32)
         this.layers.ground_layer = map.createBlankLayer('Ground', tileset)
         this.layers.resource_layer = map.createBlankLayer('Resource', tileset)
 
         const terrain = this.terrain_gen.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
-        const treePositions = this.terrain_gen.addTrees(terrain);
+        const resource_positions = this.terrain_gen.addResources(terrain)
 
-        //render
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
                 const tileId = terrain[y][x];
@@ -46,9 +45,21 @@ class MapScene extends Phaser.Scene {
             }
         }
 
-        treePositions.forEach(({ x, y }) => {
-            this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.tree_trunk.id, x, y);
-            this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.tree_top.id, x, y - 1);
+        resource_positions.forEach(({ x, y }) => {
+            let num = Math.random()
+            if (num < 0.1) {
+                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.long_grass_one.id, x, y)
+            } else if (num < 0.2 && num > 0.1) {
+                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.long_grass_two.id, x, y)
+            } else if (num < 0.3 && num > 0.2) {
+                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.berries.id, x, y)
+            } else if (num < 0.4 && num > 0.3) {
+                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.mushroom.id, x, y)
+            } else {
+                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.tree_top.id, x, y - 1)
+                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.tree_trunk.id, x, y)
+
+            }
         });
 
         this.cameras.main.setBounds(0, 0, this.mapWidth * this.tileSize, this.mapHeight * this.tileSize)

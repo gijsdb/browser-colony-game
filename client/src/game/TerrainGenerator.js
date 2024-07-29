@@ -3,6 +3,7 @@ import { createNoise2D } from 'simplex-noise';
 export const TILE_VARIANTS = {
     TERRAIN: {
         grass: { id: 0 },
+        flower: { id: 16 },
         dirt: { id: 5 },
         mountain: { id: 23 },
         WATER: {
@@ -20,6 +21,10 @@ export const TILE_VARIANTS = {
     RESOURCES: {
         tree_trunk: { id: 42 },
         tree_top: { id: 26 },
+        long_grass_one: { id: 45 },
+        long_grass_two: { id: 50 },
+        berries: { id: 52 },
+        mushroom: { id: 13 }
     }
 };
 
@@ -35,7 +40,7 @@ export class TerrainGenerator {
         for (let y = 0; y < height; y++) {
             terrain[y] = [];
             for (let x = 0; x < width; x++) {
-                const value = noise(x / 20, y / 20);
+                const value = noise(x / 35, y / 35);
                 if (value < -0.7) {
                     terrain[y][x] = TILE_VARIANTS.TERRAIN.WATER.water.id;
                 } else if (value < 0) {
@@ -55,10 +60,10 @@ export class TerrainGenerator {
         return terrain;
     }
 
-    addTrees(terrain, treeDensity = 0.05) {
+    addResources(terrain, treeDensity = 0.05) {
         const width = terrain[0].length;
         const height = terrain.length;
-        const treePositions = [];
+        const resourcePositions = [];
 
         for (let y = 1; y < height; y++) {
             for (let x = 0; x < width; x++) {
@@ -66,18 +71,18 @@ export class TerrainGenerator {
                     // Check if there's room for the tree (trunk on this tile and treetop on the tile above)
                     if (y > 0 &&
                         terrain[y - 1][x] === TILE_VARIANTS.TERRAIN.grass.id &&
-                        !this.isTreeNearby(treePositions, x, y)) {
+                        !this.isResourceNearby(resourcePositions, x, y)) {
 
-                        treePositions.push({ x, y });
+                        resourcePositions.push({ x, y });
                     }
                 }
             }
         }
-        return treePositions;
+        return resourcePositions;
     }
 
     // Check if there's a tree in the immediate vicinity (including diagonals)
-    isTreeNearby(treePositions, x, y) {
+    isResourceNearby(treePositions, x, y) {
         for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
                 if (treePositions.some(tree => tree.x === x + i && tree.y === y + j)) {
