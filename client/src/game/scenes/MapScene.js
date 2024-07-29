@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import tiles from "../../assets/tilesets/1.png";
+import tiles from "../../assets/tilesets/forest_tiles.png";
 import TerrainGenerator from '../TerrainGenerator';
 
 class MapScene extends Phaser.Scene {

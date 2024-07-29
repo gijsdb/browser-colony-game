@@ -1,18 +1,18 @@
 import { createNoise2D } from 'simplex-noise';
 
 const TILE_VARIANTS = {
-    grass: { id: 16 },
-    dirt: { id: 156 },
-    mountain: { id: 291 },
-    water: { id: 61 },
-    water_edge_top: { id: 46 },
-    water_edge_bottom: { id: 76 },
-    water_edge_left: { id: 60 },
-    water_edge_right: { id: 62 },
-    water_corner_topleft: { id: 45 },
-    water_corner_topright: { id: 47 },
-    water_corner_bottomleft: { id: 75 },
-    water_corner_bottomright: { id: 77 }
+    grass: { id: 0 },
+    dirt: { id: 5 },
+    mountain: { id: 23 },
+    water: { id: 133 },
+    water_edge_top: { id: 117 },
+    water_edge_bottom: { id: 149 },
+    water_edge_left: { id: 132 },
+    water_edge_right: { id: 134 },
+    water_corner_topleft: { id: 116 },
+    water_corner_topright: { id: 118 },
+    water_corner_bottomleft: { id: 148 },
+    water_corner_bottomright: { id: 150 }
 };
 
 
@@ -23,12 +23,12 @@ export default class TerrainGenerator {
 
     generateTerrainPerlinNoise(width, height) {
         const noise = createNoise2D();
-        const terrain = [];
+        let terrain = [];
         for (let y = 0; y < height; y++) {
             terrain[y] = [];
             for (let x = 0; x < width; x++) {
                 const value = noise(x / 20, y / 20);
-                if (value < -0.6) {
+                if (value < -0.7) {
                     terrain[y][x] = TILE_VARIANTS.water.id;
                 } else if (value < 0) {
                     terrain[y][x] = TILE_VARIANTS.grass.id;
@@ -40,9 +40,77 @@ export default class TerrainGenerator {
             }
         }
 
+        terrain = this.smoothTerrain(terrain, 2);
+        this.removeSmallWaterBodies(terrain, 30); // Adjust minimum size as needed
         this.applyWaterEdges(terrain);
 
+
         return terrain;
+    }
+
+    smoothTerrain(terrain, passes = 2) {
+        const width = terrain[0].length;
+        const height = terrain.length;
+        const smoothed = JSON.parse(JSON.stringify(terrain));
+
+        for (let pass = 0; pass < passes; pass++) {
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    const neighbors = [
+                        terrain[y - 1][x], terrain[y + 1][x],
+                        terrain[y][x - 1], terrain[y][x + 1]
+                    ];
+                    const mostCommon = neighbors.sort((a, b) =>
+                        neighbors.filter(v => v === a).length
+                        - neighbors.filter(v => v === b).length
+                    ).pop();
+                    smoothed[y][x] = mostCommon;
+                }
+            }
+            terrain = JSON.parse(JSON.stringify(smoothed));
+        }
+        return terrain;
+    }
+
+    removeSmallWaterBodies(terrain, minSize) {
+        const width = terrain[0].length;
+        const height = terrain.length;
+        const visited = Array(height).fill().map(() => Array(width).fill(false));
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                if (terrain[y][x] === TILE_VARIANTS.water.id && !visited[y][x]) {
+                    const waterBody = this.floodFill(terrain, x, y, visited);
+                    if (waterBody.length < minSize) {
+                        waterBody.forEach(([wx, wy]) => {
+                            terrain[wy][wx] = TILE_VARIANTS.grass.id;
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    //  identify and measure the size of water bodies
+    floodFill(terrain, startX, startY, visited) {
+        const width = terrain[0].length;
+        const height = terrain.length;
+        const waterBody = [];
+        const stack = [[startX, startY]];
+
+        while (stack.length > 0) {
+            const [x, y] = stack.pop();
+            if (x < 0 || x >= width || y < 0 || y >= height || visited[y][x] || terrain[y][x] !== TILE_VARIANTS.water.id) {
+                continue;
+            }
+
+            visited[y][x] = true;
+            waterBody.push([x, y]);
+
+            stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+        }
+
+        return waterBody;
     }
 
     applyWaterEdges(terrain) {
@@ -90,49 +158,35 @@ export default class TerrainGenerator {
         const bottomLeft = isWater(x - 1, y + 1);
         const bottomRight = isWater(x + 1, y + 1);
 
-
-        // First handle simple edges
-        if (!top) {
+        if (!top && left && right) {
             return TILE_VARIANTS.water_edge_top.id;
         }
-
-        if (!right && !top) {
-            return TILE_VARIANTS.water_edge_right.id
-        }
-
-        if (!top && !right) {
-            return TILE_VARIANTS.water_edge_right.id;
-
-        }
-
-        if (!bottom) {
+        if (!bottom && left && right) {
             return TILE_VARIANTS.water_edge_bottom.id;
         }
-        // if (bottom && !left && !right) {
-        //     return TILE_VARIANTS.water_edge_bottom.id;
-        // }
-        // if (left && !top && !bottom) {
-        //     return TILE_VARIANTS.water_edge_left.id;
-        // }
-        // if (right && !top && !bottom) {
-        //     return TILE_VARIANTS.water_edge_right.id;
-        // }
+        if (!left && top && bottom) {
+            return TILE_VARIANTS.water_edge_left.id;
+        }
+        if (!right && top && bottom) {
+            return TILE_VARIANTS.water_edge_right.id;
+        }
 
-        // // Then handle corners
-        // if (top && left && !topLeft) {
-        //     return TILE_VARIANTS.water_corner_topleft.id;
-        // }
-        // if (top && right && !topRight) {
-        //     return TILE_VARIANTS.water_corner_topright.id;
-        // }
-        // if (bottom && left && !bottomLeft) {
-        //     return TILE_VARIANTS.water_corner_bottomleft.id;
-        // }
-        // if (bottom && right && !bottomRight) {
-        //     return TILE_VARIANTS.water_corner_bottomright.id;
-        // }
+        // Then handle corners
+        if (!top && !left && !topLeft) {
+            return TILE_VARIANTS.water_corner_topleft.id;
+        }
+        if (!top && !right && !topRight) {
+            return TILE_VARIANTS.water_corner_topright.id;
+        }
+        if (!bottom && !left && !bottomLeft) {
+            return TILE_VARIANTS.water_corner_bottomleft.id;
+        }
+        if (!bottom && !right && !bottomRight) {
+            return TILE_VARIANTS.water_corner_bottomright.id;
+        }
 
-        // Default to water
+
         return TILE_VARIANTS.water.id;
+
     }
 }
