@@ -58,21 +58,34 @@ export class TerrainGenerator {
     addTrees(terrain, treeDensity = 0.05) {
         const width = terrain[0].length;
         const height = terrain.length;
-
         const treePositions = [];
 
         for (let y = 1; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 if (terrain[y][x] === TILE_VARIANTS.TERRAIN.grass.id && Math.random() < treeDensity) {
-                    // check there is room for the tree (trunk on this tile and treetop on the tile above)
-                    if (y > 0 && terrain[y - 1][x] === TILE_VARIANTS.TERRAIN.grass.id) {
+                    // Check if there's room for the tree (trunk on this tile and treetop on the tile above)
+                    if (y > 0 &&
+                        terrain[y - 1][x] === TILE_VARIANTS.TERRAIN.grass.id &&
+                        !this.isTreeNearby(treePositions, x, y)) {
+
                         treePositions.push({ x, y });
                     }
                 }
             }
         }
-
         return treePositions;
+    }
+
+    // Check if there's a tree in the immediate vicinity (including diagonals)
+    isTreeNearby(treePositions, x, y) {
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                if (treePositions.some(tree => tree.x === x + i && tree.y === y + j)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     smoothTerrain(terrain, passes = 2) {
