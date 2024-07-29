@@ -32,6 +32,7 @@ class MapScene extends Phaser.Scene {
         this.layers.resource_layer = map.createBlankLayer('Resource', tileset)
 
         const terrain = this.terrain_gen.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
+        const treePositions = this.terrain_gen.addTrees(terrain);
 
         //render
         for (let y = 0; y < this.mapHeight; y++) {
@@ -44,6 +45,11 @@ class MapScene extends Phaser.Scene {
                 }
             }
         }
+
+        treePositions.forEach(({ x, y }) => {
+            this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.tree_trunk.id, x, y);
+            this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.tree_top.id, x, y - 1);
+        });
 
         this.cameras.main.setBounds(0, 0, this.mapWidth * this.tileSize, this.mapHeight * this.tileSize)
 
@@ -105,14 +111,19 @@ class MapScene extends Phaser.Scene {
 
             if (groundTile || resourceTile) {
                 const tile = groundTile || resourceTile;
+                let layerName = 'Ground'
+                if (resourceTile != null) {
+                    layerName = 'Both'
+                }
                 this.tooltip
-                    .setText(`Tile: ${terrain[tileY][tileX]}, x: ${tile.x}, y: ${tile.y} layer: ${tile.layer.name}`)
+                    .setText(`Tile: ${terrain[tileY][tileX]}, x: ${tile.x}, y: ${tile.y} layer: ${layerName}`)
                     .setPosition(pointer.x, pointer.y - 20)
                     .setAlpha(1);
                 this.borderGraphics.clear();
                 this.borderGraphics.lineStyle(2, 0x00ff00, 1);
                 this.borderGraphics.strokeRect(tileX * this.tileSize, tileY * this.tileSize, this.tileSize, this.tileSize); // Use tileSize
-            } else {
+            }
+            else {
                 this.tooltip.setAlpha(0);
                 this.borderGraphics.clear();
             }

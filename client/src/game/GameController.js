@@ -12,7 +12,8 @@ export default class GameController {
                 mode: Phaser.Scale.RESIZE,
                 autoCenter: Phaser.Scale.CENTER_BOTH
             },
-            parent: container_id
+            parent: container_id,
+            transparent: true,
         };
 
         return new Phaser.Game(config);

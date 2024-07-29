@@ -51,7 +51,6 @@ export class TerrainGenerator {
         terrain = this.smoothTerrain(terrain, 2);
         terrain = this.removeSmallWaterBodies(terrain, 30); // Adjust minimum size as needed
         terrain = this.applyWaterEdges(terrain);
-        terrain = this.addTrees(terrain,)
 
         return terrain;
     }
@@ -60,19 +59,20 @@ export class TerrainGenerator {
         const width = terrain[0].length;
         const height = terrain.length;
 
+        const treePositions = [];
+
         for (let y = 1; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 if (terrain[y][x] === TILE_VARIANTS.TERRAIN.grass.id && Math.random() < treeDensity) {
                     // check there is room for the tree (trunk on this tile and treetop on the tile above)
-                    if (terrain[y - 1][x] === TILE_VARIANTS.TERRAIN.grass.id) {
-                        terrain[y][x] = TILE_VARIANTS.RESOURCES.tree_trunk.id;
-                        terrain[y - 1][x] = TILE_VARIANTS.RESOURCES.tree_top.id;
+                    if (y > 0 && terrain[y - 1][x] === TILE_VARIANTS.TERRAIN.grass.id) {
+                        treePositions.push({ x, y });
                     }
                 }
             }
         }
 
-        return terrain;
+        return treePositions;
     }
 
     smoothTerrain(terrain, passes = 2) {
