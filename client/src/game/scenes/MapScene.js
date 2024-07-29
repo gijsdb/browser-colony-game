@@ -9,6 +9,10 @@ class MapScene extends Phaser.Scene {
         this.terrain_gen = new TerrainGenerator()
         this.targetZoom = 1
         this.zoomSpeed = 0.1
+        this.layers = {}
+        this.tileSize = 32
+        this.mapWidth = 100
+        this.mapHeight = 100
     }
 
     preload() {
@@ -16,38 +20,48 @@ class MapScene extends Phaser.Scene {
     }
 
     create() {
-        const mapWidth = 100
-        const mapHeight = 100
-        const tileSize = 32
-
         const map = this.make.tilemap({
-            tileWidth: tileSize,
-            tileHeight: tileSize,
-            width: mapWidth,
-            height: mapHeight
+            tileWidth: this.tileSize,
+            tileHeight: this.tileSize,
+            width: this.mapWidth,
+            height: this.mapHeight
         })
 
         const tileset = map.addTilesetImage('tileset-name', 'tiles')
-        const ground_layer = map.createBlankLayer('Ground', tileset)
-        const resource_layer = map.createBlankLayer('Resource', tileset)
+        this.layers.ground_layer = map.createBlankLayer('Ground', tileset)
+        this.layers.resource_layer = map.createBlankLayer('Resource', tileset)
 
-        const terrain = this.terrain_gen.generateTerrainPerlinNoise(mapWidth, mapHeight)
+        const terrain = this.terrain_gen.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
 
-        for (let y = 0; y < mapHeight; y++) {
-            for (let x = 0; x < mapWidth; x++) {
-                const tileId = terrain[y][x]
-
-                if (tileId in TILE_VARIANTS.TERRAIN) {
-                    map.putTileAt(tileId, x, y, false, ground_layer)
-                } else {
-                    map.putTileAt(tileId, x, y, false, resource_layer)
+        //render
+        for (let y = 0; y < this.mapHeight; y++) {
+            for (let x = 0; x < this.mapWidth; x++) {
+                const tileId = terrain[y][x];
+                if (this.isTileIdInObject(tileId, TILE_VARIANTS.TERRAIN)) {
+                    map.putTileAt(tileId, x, y, false, this.layers.ground_layer);
+                } else if (this.isTileIdInObject(tileId, TILE_VARIANTS.RESOURCES)) {
+                    map.putTileAt(tileId, x, y, false, this.layers.resource_layer);
                 }
             }
         }
 
-        this.cameras.main.setBounds(0, 0, mapWidth * tileSize, mapHeight * tileSize)
+        this.cameras.main.setBounds(0, 0, this.mapWidth * this.tileSize, this.mapHeight * this.tileSize)
 
         this.setInputHandlers(map, terrain)
+    }
+
+    isTileIdInObject(tileId, obj) {
+        for (const key in obj) {
+            if (obj[key].id === tileId) {
+                return true;
+            }
+            if (obj[key] && typeof obj[key] === 'object') {
+                if (this.isTileIdInObject(tileId, obj[key])) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     update() {
@@ -83,23 +97,27 @@ class MapScene extends Phaser.Scene {
         this.borderGraphics = this.add.graphics()
 
         this.input.on('pointermove', (pointer) => {
-            const tileX = map.worldToTileX(pointer.worldX)
-            const tileY = map.worldToTileY(pointer.worldY)
-            const tile = map.getTileAt(tileX, tileY)
+            const tileX = map.worldToTileX(pointer.worldX);
+            const tileY = map.worldToTileY(pointer.worldY);
 
-            if (tile) {
+            const groundTile = this.layers.ground_layer.getTileAt(tileX, tileY);
+            const resourceTile = this.layers.resource_layer.getTileAt(tileX, tileY);
+
+            if (groundTile || resourceTile) {
+                const tile = groundTile || resourceTile;
                 this.tooltip
-                    .setText(`Tile: ${terrain[tileY][tileX]}, x: ${tile.x}, y ${tile.y}`)
+                    .setText(`Tile: ${terrain[tileY][tileX]}, x: ${tile.x}, y: ${tile.y} layer: ${tile.layer.name}`)
                     .setPosition(pointer.x, pointer.y - 20)
-                    .setAlpha(1)
-                this.borderGraphics.clear()
-                this.borderGraphics.lineStyle(2, 0x00ff00, 1)
-                this.borderGraphics.strokeRect(tileX * 32, tileY * 32, 32, 32) // todo dont hard code 32 as tileSize
+                    .setAlpha(1);
+                this.borderGraphics.clear();
+                this.borderGraphics.lineStyle(2, 0x00ff00, 1);
+                this.borderGraphics.strokeRect(tileX * this.tileSize, tileY * this.tileSize, this.tileSize, this.tileSize); // Use tileSize
             } else {
-                this.tooltip.setAlpha(0)
-                this.borderGraphics.clear()
+                this.tooltip.setAlpha(0);
+                this.borderGraphics.clear();
             }
         })
+
 
         this.input.on('pointerout', () => {
             this.tooltip.setAlpha(0)
@@ -114,6 +132,7 @@ class MapScene extends Phaser.Scene {
                 console.log(`Clicked on tile at ${tileX}, ${tileY}`)
             }
         })
+
         this.input.on('wheel', (pointer, objects, deltaX, deltaY) => {
             const zoomChange = deltaY * 0.001 // Adjust this value for zoom sensitivity
             this.targetZoom = Phaser.Math.Clamp(this.cameras.main.zoom - zoomChange, 0.5, 3)
