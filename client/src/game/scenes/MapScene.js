@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import tiles from '../../assets/tilesets/forest_tiles.png'
+import tiles from '../../assets/tilesets/forest_tiles_fixed.png'
 import { TerrainGenerator, TILE_VARIANTS } from '../TerrainGenerator'
 
 class MapScene extends Phaser.Scene {
@@ -27,7 +27,7 @@ class MapScene extends Phaser.Scene {
             height: this.mapHeight
         })
 
-        const tileset = map.addTilesetImage('tileset-name', 'tiles', 32, 32)
+        const tileset = map.addTilesetImage('tileset-name', 'tiles', 32, 32, 1, 2)
         this.layers.ground_layer = map.createBlankLayer('Ground', tileset)
         this.layers.resource_layer = map.createBlankLayer('Resource', tileset)
 
@@ -63,7 +63,6 @@ class MapScene extends Phaser.Scene {
         });
 
         this.cameras.main.setBounds(0, 0, this.mapWidth * this.tileSize, this.mapHeight * this.tileSize)
-
         this.setInputHandlers(map, terrain)
     }
 
