@@ -82,7 +82,10 @@ class MapScene extends Phaser.Scene {
 
     update() {
         const cam = this.cameras.main
-        cam.zoom += (this.targetZoom - cam.zoom) * this.zoomSpeed
+        if (this.targetZoom > 0.8) {
+            cam.zoom += (this.targetZoom - cam.zoom) * this.zoomSpeed
+
+        }
         if (this.wasd.W.isDown) {
             cam.scrollY -= 10
         } else if (this.wasd.S.isDown) {
