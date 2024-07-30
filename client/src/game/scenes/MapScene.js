@@ -4,15 +4,15 @@ import { TerrainGenerator, TILE_VARIANTS } from '../TerrainGenerator'
 
 class MapScene extends Phaser.Scene {
     constructor() {
-        super({ key: 'GameScene' })
+        super({ key: 'MapScene' })
 
-        this.terrain_gen = new TerrainGenerator()
+        this.terrainGenerator = new TerrainGenerator()
         this.targetZoom = 1
         this.zoomSpeed = 0.1
         this.layers = {}
         this.tileSize = 32
-        this.mapWidth = 80
-        this.mapHeight = 80
+        this.mapWidth = 100
+        this.mapHeight = 100
     }
 
     preload() {
@@ -30,37 +30,27 @@ class MapScene extends Phaser.Scene {
         const tileset = map.addTilesetImage('tileset-name', 'tiles', 32, 32, 1, 2)
         this.layers.ground_layer = map.createBlankLayer('Ground', tileset)
         this.layers.resource_layer = map.createBlankLayer('Resource', tileset)
+        this.layers.decoration_layer = map.createBlankLayer('Decoration', tileset)
 
-        const terrain = this.terrain_gen.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
-        const resource_positions = this.terrain_gen.addResources(terrain)
+        const terrain = this.terrainGenerator.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
+        this.terrainGenerator.addResources(terrain)
+        this.terrainGenerator.addDecoration(terrain)
 
+        // render terrain
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
                 const tileId = terrain[y][x];
                 if (this.isTileIdInObject(tileId, TILE_VARIANTS.TERRAIN)) {
                     map.putTileAt(tileId, x, y, false, this.layers.ground_layer);
                 } else if (this.isTileIdInObject(tileId, TILE_VARIANTS.RESOURCES)) {
+                    this.layers.ground_layer.putTileAt(TILE_VARIANTS.TERRAIN.grass.id, x, y)
                     map.putTileAt(tileId, x, y, false, this.layers.resource_layer);
+                } else if (this.isTileIdInObject(tileId, TILE_VARIANTS.DECORATION)) {
+                    this.layers.ground_layer.putTileAt(TILE_VARIANTS.TERRAIN.grass.id, x, y)
+                    map.putTileAt(tileId, x, y, false, this.layers.decoration_layer);
                 }
             }
         }
-
-        resource_positions.forEach(({ x, y }) => {
-            let num = Math.random()
-            if (num < 0.1) {
-                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.long_grass_one.id, x, y)
-            } else if (num < 0.2 && num > 0.1) {
-                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.long_grass_two.id, x, y)
-            } else if (num < 0.3 && num > 0.2) {
-                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.berries.id, x, y)
-            } else if (num < 0.4 && num > 0.3) {
-                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.mushroom.id, x, y)
-            } else {
-                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.tree_top.id, x, y - 1)
-                this.layers.resource_layer.putTileAt(TILE_VARIANTS.RESOURCES.tree_trunk.id, x, y)
-
-            }
-        });
 
         this.cameras.main.setBounds(0, 0, this.mapWidth * this.tileSize, this.mapHeight * this.tileSize)
         this.setInputHandlers(map, terrain)
@@ -87,15 +77,15 @@ class MapScene extends Phaser.Scene {
 
         }
         if (this.wasd.W.isDown) {
-            cam.scrollY -= 10
+            cam.scrollY -= 15
         } else if (this.wasd.S.isDown) {
-            cam.scrollY += 10
+            cam.scrollY += 15
         }
 
         if (this.wasd.A.isDown) {
-            cam.scrollX -= 10
+            cam.scrollX -= 15
         } else if (this.wasd.D.isDown) {
-            cam.scrollX += 10
+            cam.scrollX += 15
         }
     }
 
@@ -121,12 +111,16 @@ class MapScene extends Phaser.Scene {
 
             const groundTile = this.layers.ground_layer.getTileAt(tileX, tileY);
             const resourceTile = this.layers.resource_layer.getTileAt(tileX, tileY);
+            const decorationTile = this.layers.decoration_layer.getTileAt(tileX, tileY);
 
-            if (groundTile || resourceTile) {
-                const tile = groundTile || resourceTile;
+            if (groundTile || resourceTile || decorationTile) {
+                const tile = groundTile || resourceTile || decorationTile;
                 let layerName = 'Ground'
                 if (resourceTile != null) {
-                    layerName = 'Both'
+                    layerName = 'Resource'
+                }
+                if (decorationTile != null) {
+                    layerName = 'Decoration'
                 }
                 this.tooltip
                     .setText(`Tile: ${terrain[tileY][tileX]}, x: ${tile.x}, y: ${tile.y} layer: ${layerName}`)

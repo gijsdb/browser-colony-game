@@ -21,15 +21,15 @@ onMounted(() => {
         new UIController(gc)
     }
 
-    gameContainer.value.addEventListener(
-        'wheel',
-        (event) => {
-            // Allow scrolling only if the event target is not part of the UI
-            if (!event.target.closest('.ui-component')) {
-                event.stopPropagation()
-            }
-        },
-        true
-    ) // ensure Phaser gets the event first
+    // gameContainer.value.addEventListener(
+    //     'wheel',
+    //     (event) => {
+    //         // Allow scrolling only if the event target is not part of the UI
+    //         if (!event.target.closest('.ui-component')) {
+    //             event.stopPropagation()
+    //         }
+    //     },
+    //     true
+    // ) // ensure Phaser gets the event first
 })
 </script>

@@ -25,6 +25,10 @@ export const TILE_VARIANTS = {
         long_grass_two: { id: 50 },
         berries: { id: 52 },
         mushroom: { id: 13 }
+    },
+    DECORATION: {
+        tree_stump: { id: 54 },
+        flowers: { id: 2 }
     }
 };
 
@@ -73,19 +77,52 @@ export class TerrainGenerator {
                         terrain[y - 1][x] === TILE_VARIANTS.TERRAIN.grass.id &&
                         !this.isResourceNearby(resourcePositions, x, y)) {
 
+                        let num = Math.random()
+                        if (num < 0.1) {
+                            terrain[y][x] = TILE_VARIANTS.RESOURCES.long_grass_one.id
+                        } else if (num < 0.2 && num > 0.1) {
+                            terrain[y][x] = TILE_VARIANTS.RESOURCES.long_grass_two.id
+                        } else if (num < 0.3 && num > 0.2) {
+                            terrain[y][x] = TILE_VARIANTS.RESOURCES.berries.id
+
+                        } else if (num < 0.4 && num > 0.3) {
+                            terrain[y][x] = TILE_VARIANTS.RESOURCES.mushroom.id
+                        } else {
+                            terrain[y - 1][x] = TILE_VARIANTS.RESOURCES.tree_top.id
+                            terrain[y][x] = TILE_VARIANTS.RESOURCES.tree_trunk.id
+                        }
                         resourcePositions.push({ x, y });
                     }
                 }
             }
         }
-        return resourcePositions;
+        return terrain;
     }
 
-    // Check if there's a tree in the immediate vicinity (including diagonals)
-    isResourceNearby(treePositions, x, y) {
+    addDecoration(terrain) {
+        const width = terrain[0].length;
+        const height = terrain.length;
+
+        for (let y = 1; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                if (terrain[y][x] === TILE_VARIANTS.TERRAIN.grass.id && Math.random() < 0.2) {
+                    let num = Math.random()
+                    if (num < 0.05) {
+                        terrain[y][x] = TILE_VARIANTS.DECORATION.tree_stump.id
+                    } else if (num < 0.1 && num > 0.05) {
+                        terrain[y][x] = TILE_VARIANTS.DECORATION.flowers.id
+                    }
+                }
+            }
+        }
+        return terrain;
+    }
+
+    // Check if there's a resource in the immediate vicinity (including diagonals)
+    isResourceNearby(resourcePositions, x, y) {
         for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
-                if (treePositions.some(tree => tree.x === x + i && tree.y === y + j)) {
+                if (resourcePositions.some(resource => resource.x === x + i && resource.y === y + j)) {
                     return true;
                 }
             }
