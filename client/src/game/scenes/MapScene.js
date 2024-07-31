@@ -17,6 +17,12 @@ class MapScene extends Phaser.Scene {
 
     preload() {
         this.load.image('tiles', tiles)
+        this.load.spritesheet('butterfly', tiles, {
+            frameWidth: 32, // Adjust based on your sprite sheet
+            frameHeight: 32, // Adjust based on your sprite sheet
+            margin: 1,
+            spacing: 2,
+        });
     }
 
     create() {
@@ -52,8 +58,50 @@ class MapScene extends Phaser.Scene {
             }
         }
 
+        this.anims.create({
+            key: 'fly',
+            frames: this.anims.generateFrameNumbers('butterfly', { start: 89, end: 91 }), // Adjust start and end frame based on your sprite sheet
+            frameRate: 5,
+            repeat: -1
+        });
+
+        // Call function to add butterflies
+        this.addButterflies();
+
         this.cameras.main.setBounds(0, 0, this.mapWidth * this.tileSize, this.mapHeight * this.tileSize)
         this.setInputHandlers(map, terrain)
+    }
+
+    addButterflies() {
+        this.butterflies = this.add.group();
+
+        for (let i = 0; i < 10; i++) { // Adjust the number of butterflies
+            const x = Phaser.Math.Between(0, this.mapWidth * this.tileSize);
+            const y = Phaser.Math.Between(0, this.mapHeight * this.tileSize);
+
+            const butterfly = this.butterflies.create(x, y, 'butterfly').play('fly');
+            this.animateButterfly(butterfly);
+        }
+    }
+
+    animateButterfly(butterfly) {
+        const duration = Phaser.Math.Between(20000, 50000); // Adjust the duration for movement
+
+        this.tweens.add({
+            targets: butterfly,
+            x: {
+                value: () => Phaser.Math.Between(0, this.mapWidth * this.tileSize),
+                duration: duration,
+
+            },
+            y: {
+                value: () => Phaser.Math.Between(0, this.mapHeight * this.tileSize),
+                duration: duration,
+            },
+            onComplete: () => {
+                this.animateButterfly(butterfly);
+            }
+        });
     }
 
     isTileIdInObject(tileId, obj) {
