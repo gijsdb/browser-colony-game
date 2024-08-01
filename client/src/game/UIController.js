@@ -1,18 +1,17 @@
+import { eventBus } from '@/eventBus';
+
 export default class UIController {
-
-    constructor(gameController) {
-        this.gameController = gameController;
-        this.setupEventListeners();
+    constructor(scene) {
+        this.scene = scene;
     }
 
-    setupEventListeners() {
-        const testButton = document.getElementById('testButton');
-        if (testButton) {
-            testButton.addEventListener('click', () => this.testButtonClick());
-        }
+    listen() {
+        // Listen for events from Vue
+        eventBus.value.on('button-click', (data) => {
+            console.log('Event received in Phaser:', data);
+            this.scene.cameras.main.shake(500);
+        });
     }
 
-    testButtonClick() {
-        console.log('beep')
-    }
+
 }

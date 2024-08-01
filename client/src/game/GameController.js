@@ -7,7 +7,7 @@ export default class GameController {
             type: Phaser.AUTO,
             width: window.innerWidth,
             height: window.innerHeight,
-            scene: MapScene,
+            scene: new MapScene("test"),
             scale: {
                 mode: Phaser.Scale.RESIZE,
                 autoCenter: Phaser.Scale.CENTER_BOTH
