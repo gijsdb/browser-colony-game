@@ -16,6 +16,11 @@ export default class GameController {
             transparent: true,
         };
 
-        return new Phaser.Game(config);
+        this.game = new Phaser.Game(config)
+    }
+
+    endGame() {
+        this.game.destroy(true)
+        this.game = null
     }
 }

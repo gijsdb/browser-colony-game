@@ -3,20 +3,29 @@
         ref="gameContainer"
         class="game-container"
     >
-        <GameUI></GameUI>
+        <button
+            @click="handleExitGame"
+            class="border-2 border-gray-400 bg-[#181818] absolute p-2 right-2 top-2 font-xl text-gray-400"
+        >Exit
+        </button>
+        <GameUI v-show="gameStoreRef.game.value.running"></GameUI>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
+import { storeToRefs } from "pinia";
+import { useGameStore } from "@/stores/game.js";
 import GameUI from '@/components/GameUI.vue'
-import GameController from '@/game/GameController'
+
+const gameStore = useGameStore();
+let gameStoreRef = storeToRefs(gameStore);
+const { storeEndGame } = gameStore;
 
 const gameContainer = ref(null)
 
-onMounted(() => {
-    if (gameContainer.value) {
-        let gc = new GameController(gameContainer.value.id)
-    }
-})
+const handleExitGame = () => {
+    storeEndGame()
+    gameContainer.value = null
+}
 </script>

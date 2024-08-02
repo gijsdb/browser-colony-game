@@ -1,28 +1,17 @@
 <template>
   <div>
-    <MainMenu
-      v-if="!gameStarted"
-      @start-game="startGame"
-    />
+    <MainMenu v-if="!gameStoreRef.game.value.running" />
     <Game v-else />
   </div>
 </template>
 
 <script setup>
 import Game from './components/Game.vue'
-
 import MainMenu from './components/MainMenu.vue'
-import { ref } from 'vue'
+import { storeToRefs } from "pinia";
+import { useGameStore } from "./stores/game.js";
 
-let gameStarted = ref(false)
 
-const startGame = () => {
-  gameStarted.value = true
-}
+const gameStore = useGameStore();
+let gameStoreRef = storeToRefs(gameStore);
 </script>
-
-<style>
-body {
-  margin: 0;
-}
-</style>
