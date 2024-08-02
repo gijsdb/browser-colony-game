@@ -1,6 +1,37 @@
+import { TILE_VARIANTS } from "./TerrainGenerator";
+
 export default class EntityController {
     constructor(scene) {
         this.scene = scene;
+        this.colonists = [];
+    }
+
+    addColonists(colonistAmount) {
+        // this.scene.anims.create({
+        //     key: 'colonist_walk',
+        //     frames: this.scene.anims.generateFrameNumbers('colonist', { start: 100, end: 100 }),
+        //     frameRate: 10,
+        //     repeat: -1
+        // });
+
+        // this.scene.colonists = this.scene.add.group();
+
+        // for (let i = this.colonists.length; i < colonistAmount; i++) {
+        //     const x = Phaser.Math.Between(0, this.scene.mapWidth - 1) * this.scene.tileSize;
+        //     const y = Phaser.Math.Between(0, this.scene.mapHeight - 1) * this.scene.tileSize;
+
+        //     if (this.scene.layers.ground_layer.getTileAt(x, y) === TILE_VARIANTS.TERRAIN.grass) {
+        //         const colonist = this.scene.colonists.create(x, y, 'colonist').play('colonist_walk');
+
+        //         this.colonists.push(colonist);
+        //     }
+        // }
+    }
+
+    update() {
+        this.colonists.forEach(colonist => {
+
+        });
     }
 
     addButterflies() {

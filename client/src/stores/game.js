@@ -14,8 +14,8 @@ export const useGameStore = defineStore('GameStore', {
 
     },
     actions: {
-        storeStartGame(gameContainer) {
-            this.game.controller = new GameController(gameContainer)
+        storeStartGame(colonistAmount) {
+            this.game.controller = new GameController(colonistAmount)
             this.game.running = true
         },
         storeEndGame() {

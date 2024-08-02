@@ -1,8 +1,5 @@
 <template>
-    <div
-        ref="gameContainer"
-        class="game-container"
-    >
+    <div class="game-container">
         <button
             @click="handleExitGame"
             class="border-2 border-gray-400 bg-[#181818] absolute p-2 right-2 top-2 font-xl text-gray-400"
@@ -13,7 +10,6 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import { storeToRefs } from "pinia";
 import { useGameStore } from "@/stores/game.js";
 import GameUI from '@/components/GameUI.vue'
@@ -22,10 +18,7 @@ const gameStore = useGameStore();
 let gameStoreRef = storeToRefs(gameStore);
 const { storeEndGame } = gameStore;
 
-const gameContainer = ref(null)
-
 const handleExitGame = () => {
     storeEndGame()
-    gameContainer.value = null
 }
 </script>

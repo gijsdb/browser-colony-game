@@ -3,23 +3,37 @@ import tiles from '../../assets/tilesets/forest_tiles_fixed.png'
 import { TerrainGenerator, TILE_VARIANTS } from '../TerrainGenerator'
 import EntityController from '../EntityController'
 import UIController from '../UIController'
+import CameraController from '../CameraController'
+import { isTileIdInObject } from '../util'
 
 class MapScene extends Phaser.Scene {
-    constructor(msg) {
+    constructor(colonistAmount) {
         super({ key: 'MapScene' })
-        console.log(msg)
-        this.terrainGenerator = new TerrainGenerator()
-        this.targetZoom = 1
-        this.zoomSpeed = 0.1
+
+        this.colonistAmount = colonistAmount || 1
         this.layers = {}
         this.tileSize = 32
         this.mapWidth = 100
         this.mapHeight = 100
+        this.entityController = null
+        this.cameraController = null
+        this.terrainGenerator = new TerrainGenerator()
+        this.entityController = new EntityController(this)
+        this.cameraController = null
+
+        console.log("loading map with colonist amount: ", this.colonistAmount)
     }
 
     preload() {
         this.load.image('tiles', tiles)
         this.load.spritesheet('butterfly', tiles, {
+            frameWidth: 32,
+            frameHeight: 32,
+            margin: 1,
+            spacing: 2,
+        });
+
+        this.load.spritesheet('colonist', tiles, {
             frameWidth: 32,
             frameHeight: 32,
             margin: 1,
@@ -46,10 +60,12 @@ class MapScene extends Phaser.Scene {
 
         this.renderMap(map, terrain)
 
-        this.entityController = new EntityController(this)
-        this.entityController.addButterflies()
 
-        this.cameras.main.setBounds(0, 0, this.mapWidth * this.tileSize, this.mapHeight * this.tileSize)
+        this.entityController.addButterflies()
+        this.entityController.addColonists(this.colonistAmount)
+
+        this.cameraController = new CameraController(this.cameras.main, this.mapWidth, this.mapHeight, this.tileSize, 1, 0.1)
+
         this.setInputHandlers(map, terrain)
 
         this.UIController = new UIController(this)
@@ -60,12 +76,12 @@ class MapScene extends Phaser.Scene {
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
                 const tileId = terrain[y][x];
-                if (this.isTileIdInObject(tileId, TILE_VARIANTS.TERRAIN)) {
+                if (isTileIdInObject(tileId, TILE_VARIANTS.TERRAIN)) {
                     map.putTileAt(tileId, x, y, false, this.layers.ground_layer);
-                } else if (this.isTileIdInObject(tileId, TILE_VARIANTS.RESOURCES)) {
+                } else if (isTileIdInObject(tileId, TILE_VARIANTS.RESOURCES)) {
                     this.layers.ground_layer.putTileAt(TILE_VARIANTS.TERRAIN.grass.id, x, y)
                     map.putTileAt(tileId, x, y, false, this.layers.resource_layer);
-                } else if (this.isTileIdInObject(tileId, TILE_VARIANTS.DECORATION)) {
+                } else if (isTileIdInObject(tileId, TILE_VARIANTS.DECORATION)) {
                     this.layers.ground_layer.putTileAt(TILE_VARIANTS.TERRAIN.grass.id, x, y)
                     map.putTileAt(tileId, x, y, false, this.layers.decoration_layer);
                 }
@@ -74,37 +90,15 @@ class MapScene extends Phaser.Scene {
     }
 
     update() {
-        const cam = this.cameras.main
-        if (this.targetZoom > 0.8) {
-            cam.zoom += (this.targetZoom - cam.zoom) * this.zoomSpeed
-
-        }
-        if (this.wasd.W.isDown) {
-            cam.scrollY -= 15
-        } else if (this.wasd.S.isDown) {
-            cam.scrollY += 15
+        if (this.cameraController) {
+            this.cameraController.update(this.wasd.W.isDown, this.wasd.S.isDown, this.wasd.A.isDown, this.wasd.D.isDown)
         }
 
-        if (this.wasd.A.isDown) {
-            cam.scrollX -= 15
-        } else if (this.wasd.D.isDown) {
-            cam.scrollX += 15
+        if (this.entityController) {
+            this.entityController.update()
         }
     }
 
-    isTileIdInObject(tileId, obj) {
-        for (const key in obj) {
-            if (obj[key].id === tileId) {
-                return true;
-            }
-            if (obj[key] && typeof obj[key] === 'object') {
-                if (this.isTileIdInObject(tileId, obj[key])) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 
     setInputHandlers(map, terrain) {
         this.cursors = this.input.keyboard.createCursorKeys()
@@ -169,8 +163,7 @@ class MapScene extends Phaser.Scene {
         })
 
         this.input.on('wheel', (pointer, objects, deltaX, deltaY) => {
-            const zoomChange = deltaY * 0.001 // Adjust this value for zoom sensitivity
-            this.targetZoom = Phaser.Math.Clamp(this.cameras.main.zoom - zoomChange, 0.5, 3)
+            this.cameraController.handleZoom(deltaY)
         })
     }
 }
