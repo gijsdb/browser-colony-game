@@ -31,52 +31,69 @@ export default class EntityController {
     }
 
     addColonists(colonistAmount) {
-        // const colonistFrames = [
-        //     { key: 'colonist_head_left', frame: 0 },  // Head left
-        //     { key: 'colonist_head_right', frame: 1 },  // Head right
-        //     { key: 'colonist_body_left', frame: 16 },  // Body left
-        //     { key: 'colonist_body_right', frame: 17 },  // Body right
-        //     { key: 'colonist_legs_left', frame: 32 },  // Legs left
-        //     { key: 'colonist_legs_right', frame: 33 }   // Legs right
-        // ];
-        const colonistFrames = [
-            { key: 'colonist_head', frame: [0, 1] },  // Head left
-            { key: 'colonist_body', frame: [16, 17] },  // Body left
-            { key: 'colonist_legs', frame: [32, 33] },  // Legs left
-        ];
-        // Create animations for the colonist
         this.scene.anims.create({
-            key: 'colonist_walk',
-            frames: this.scene.anims.generateFrameNumbers('colonist', { frames: colonistFrames.frames }),
+            key: 'colonist_walk_head_left',
+            frames: this.scene.anims.generateFrameNumbers('colonist', { frames: [0, 2, 4, 6, 8, 10, 12, 14] }),
             frameRate: 10,
             repeat: -1
         });
+        this.scene.anims.create({
+            key: 'colonist_walk_head_right',
+            frames: this.scene.anims.generateFrameNumbers('colonist', { frames: [1, 3, 5, 7, 9, 11, 13, 15] }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.scene.anims.create({
+            key: 'colonist_walk_body_left',
+            frames: this.scene.anims.generateFrameNumbers('colonist', { frames: [16, 18, 20, 22, 24, 26, 28, 30] }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.scene.anims.create({
+            key: 'colonist_walk_body_right',
+            frames: this.scene.anims.generateFrameNumbers('colonist', { frames: [17, 19, 21, 23, 25, 27, 29, 31] }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.scene.anims.create({
+            key: 'colonist_walk_legs_left',
+            frames: this.scene.anims.generateFrameNumbers('colonist', { frames: [32, 34, 36, 38, 40, 42, 44, 46] }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.scene.anims.create({
+            key: 'colonist_walk_legs_right',
+            frames: this.scene.anims.generateFrameNumbers('colonist', { frames: [33, 35, 37, 39, 41, 43, 45, 47] }),
+            frameRate: 10,
+            repeat: -1
+        });
+
         for (let i = 0; i < colonistAmount; i++) {
             const x = Phaser.Math.Between(0, this.scene.mapWidth - 1) * this.scene.tileSize;
             const y = Phaser.Math.Between(0, this.scene.mapHeight - 1) * this.scene.tileSize;
 
-            const headTopLeft = this.scene.add.sprite(0, 0, 'colonist', 0);
-            const headTopRight = this.scene.add.sprite(16, 0, 'colonist', 1);
-            const bodyTopLeft = this.scene.add.sprite(0, 16, 'colonist', 16);
-            const bodyTopRight = this.scene.add.sprite(16, 16, 'colonist', 17);
-            const legsTopLeft = this.scene.add.sprite(0, 32, 'colonist', 32);
-            const legsTopRight = this.scene.add.sprite(16, 32, 'colonist', 33);
+            const headLeft = this.scene.add.sprite(0, 0, 'colonist', 0);
+            const headRight = this.scene.add.sprite(16, 0, 'colonist', 1);
+            const bodyLeft = this.scene.add.sprite(0, 16, 'colonist', 16);
+            const bodyRight = this.scene.add.sprite(16, 16, 'colonist', 17);
+            const legsLeft = this.scene.add.sprite(0, 32, 'colonist', 32);
+            const legsRight = this.scene.add.sprite(16, 32, 'colonist', 33);
 
             const colonist = this.scene.add.container(x, y, [
-                headTopLeft,
-                headTopRight,
-                bodyTopLeft,
-                bodyTopRight,
-                legsTopLeft,
-                legsTopRight
+                headLeft,
+                headRight,
+                bodyLeft,
+                bodyRight,
+                legsLeft,
+                legsRight
             ]);
 
-            // headTopLeft.play('colonist_head');
-            // headTopRight.play('colonist_head');
-            // bodyTopLeft.play('colonist_body');
-            // bodyTopRight.play('colonist_body');
-            // legsTopLeft.play('colonist_legs');
-            // legsTopRight.play('colonist_legs');
+            headLeft.play('colonist_walk_head_left');
+            headRight.play('colonist_walk_head_right');
+            bodyLeft.play('colonist_walk_body_left');
+            bodyRight.play('colonist_walk_body_right');
+            legsLeft.play('colonist_walk_legs_left');
+            legsRight.play('colonist_walk_legs_right');
 
             this.colonists.push(colonist);
         }
