@@ -1,6 +1,7 @@
 import { TILE_VARIANTS } from './TerrainGenerator';
 import colonist from '@/assets/characters/colonist.png'
 import tiles from '@/assets/tilesets/forest_tiles_fixed.png'
+import Colonist from './entity/colonist';
 
 export default class EntityController {
     constructor(scene) {
@@ -31,6 +32,7 @@ export default class EntityController {
     }
 
     addColonists(colonistAmount) {
+        // find a better way to do these animations
         this.scene.anims.create({
             key: 'colonist_walk_head_left',
             frames: this.scene.anims.generateFrameNumbers('colonist', { frames: [0, 2, 4, 6, 8, 10, 12, 14] }),
@@ -68,33 +70,21 @@ export default class EntityController {
             repeat: -1
         });
 
+        const centerX = Math.floor(this.scene.mapWidth / 2);
+        const centerY = Math.floor(this.scene.mapHeight / 2);
+        const spawnRadius = 10
         for (let i = 0; i < colonistAmount; i++) {
-            const x = Phaser.Math.Between(0, this.scene.mapWidth - 1) * this.scene.tileSize;
-            const y = Phaser.Math.Between(0, this.scene.mapHeight - 1) * this.scene.tileSize;
+            let x, y
+            do {
+                x = Phaser.Math.Between(centerX - spawnRadius, centerX + spawnRadius);
+                y = Phaser.Math.Between(centerY - spawnRadius, centerY + spawnRadius);
+                if (this.scene.layers.ground_layer.getTileAt(x, y).index != TILE_VARIANTS.TERRAIN.grass.id) {
+                    x = null
+                    y = null
+                }
+            } while (x == null && y == null)
 
-            const headLeft = this.scene.add.sprite(0, 0, 'colonist', 0);
-            const headRight = this.scene.add.sprite(16, 0, 'colonist', 1);
-            const bodyLeft = this.scene.add.sprite(0, 16, 'colonist', 16);
-            const bodyRight = this.scene.add.sprite(16, 16, 'colonist', 17);
-            const legsLeft = this.scene.add.sprite(0, 32, 'colonist', 32);
-            const legsRight = this.scene.add.sprite(16, 32, 'colonist', 33);
-
-            const colonist = this.scene.add.container(x, y, [
-                headLeft,
-                headRight,
-                bodyLeft,
-                bodyRight,
-                legsLeft,
-                legsRight
-            ]);
-
-            headLeft.play('colonist_walk_head_left');
-            headRight.play('colonist_walk_head_right');
-            bodyLeft.play('colonist_walk_body_left');
-            bodyRight.play('colonist_walk_body_right');
-            legsLeft.play('colonist_walk_legs_left');
-            legsRight.play('colonist_walk_legs_right');
-
+            const colonist = new Colonist(i, this.scene, x, y);
             this.colonists.push(colonist);
         }
     }

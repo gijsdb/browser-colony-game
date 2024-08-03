@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import MapScene from './scenes/MapScene';
+import MapScene from './scene/MapScene';
 
 export default class GameController {
     constructor(colonistAmount) {

@@ -48,7 +48,6 @@ class MapScene extends Phaser.Scene {
 
         this.renderMap(map, terrain)
 
-
         this.entityController.addButterflies()
         this.entityController.addColonists(this.colonistAmount)
 
