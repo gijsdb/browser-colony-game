@@ -26,19 +26,7 @@ class MapScene extends Phaser.Scene {
 
     preload() {
         this.load.image('tiles', tiles)
-        this.load.spritesheet('butterfly', tiles, {
-            frameWidth: 32,
-            frameHeight: 32,
-            margin: 1,
-            spacing: 2,
-        });
-
-        this.load.spritesheet('colonist', tiles, {
-            frameWidth: 32,
-            frameHeight: 32,
-            margin: 1,
-            spacing: 2,
-        });
+        this.entityController.preload()
     }
 
     create() {
@@ -153,14 +141,6 @@ class MapScene extends Phaser.Scene {
             this.borderGraphics.clear()
         })
 
-        this.input.on('pointerdown', (pointer) => {
-            const tileX = map.worldToTileX(pointer.worldX)
-            const tileY = map.worldToTileY(pointer.worldY)
-            const tile = map.getTileAt(tileX, tileY)
-            if (tile) {
-                console.log(`Clicked on tile at ${tileX}, ${tileY}`)
-            }
-        })
 
         this.input.on('wheel', (pointer, objects, deltaX, deltaY) => {
             this.cameraController.handleZoom(deltaY)
