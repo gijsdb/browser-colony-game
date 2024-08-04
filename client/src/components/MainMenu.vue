@@ -31,7 +31,7 @@ const gameStore = useGameStore();
 const { storeStartGame } = gameStore
 
 let creatingNewGame = ref(false)
-let colonistAmount = ref(null)
+let colonistAmount = ref(5)
 
 const handleNewGame = () => {
     creatingNewGame.value = true

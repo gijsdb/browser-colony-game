@@ -1,10 +1,10 @@
 import Phaser from 'phaser'
-import tiles from '../../assets/tilesets/forest_tiles_fixed.png'
+import tiles from '@/assets/tilesets/forest_tiles_fixed.png'
 import { TerrainGenerator, TILE_VARIANTS } from '../TerrainGenerator'
-import EntityController from '../EntityController'
-import UIController from '../UIController'
-import CameraController from '../CameraController'
-import { isTileIdInObject } from '../util'
+import EntityController from '@/game/EntityController'
+import UIController from '@/game/UIController'
+import CameraController from '@/game/CameraController'
+import { isTileIdInObject } from '@/game/util'
 
 class MapScene extends Phaser.Scene {
     constructor(colonistAmount) {
@@ -48,6 +48,7 @@ class MapScene extends Phaser.Scene {
 
         this.renderMap(map, terrain)
 
+        this.entityController.createAnimations()
         this.entityController.addButterflies()
         this.entityController.addColonists(this.colonistAmount)
 

@@ -1,3 +1,5 @@
+import { uniqueNamesGenerator, names } from 'unique-names-generator';
+
 export const isTileIdInObject = (tileId, obj) => {
     for (const key in obj) {
         if (obj[key].id === tileId) {
@@ -10,4 +12,13 @@ export const isTileIdInObject = (tileId, obj) => {
         }
     }
     return false;
+}
+
+export const generateColonistName = () => {
+    return uniqueNamesGenerator({
+        dictionaries: [names],
+        length: 1,
+        separator: ' ',
+
+    })
 }

@@ -1,7 +1,8 @@
 import { TILE_VARIANTS } from './TerrainGenerator';
-import colonist from '@/assets/characters/colonist.png'
-import tiles from '@/assets/tilesets/forest_tiles_fixed.png'
 import Colonist from './entity/colonist';
+import tiles_img from '@/assets/tilesets/forest_tiles_fixed.png'
+import colonist_img from '@/assets/characters/colonist.png'
+
 
 export default class EntityController {
     constructor(scene) {
@@ -10,29 +11,85 @@ export default class EntityController {
     }
 
     preload() {
-        this.scene.load.image('colonists', colonist)
+        this.scene.load.image('colonists', colonist_img)
 
-        this.scene.load.spritesheet('butterfly', tiles, {
+        this.scene.load.spritesheet('butterfly', tiles_img, {
             frameWidth: 32,
             frameHeight: 32,
             margin: 1,
             spacing: 2,
         });
 
-        this.scene.load.spritesheet('colonist', colonist, {
+        this.scene.load.spritesheet('colonist', colonist_img, {
             frameWidth: 16,
             frameHeight: 16,
         });
     }
 
     update() {
-        // this.colonists.forEach(colonist => {
 
-        // });
     }
 
     addColonists(colonistAmount) {
-        // find a better way to do these animations
+        const centerX = Math.floor(this.scene.mapWidth / 2);
+        const centerY = Math.floor(this.scene.mapHeight / 2);
+        const spawnRadius = 10
+        for (let i = 0; i < colonistAmount; i++) {
+            let x, y
+            do {
+                x = Phaser.Math.Between(centerX - spawnRadius, centerX + spawnRadius);
+                y = Phaser.Math.Between(centerY - spawnRadius, centerY + spawnRadius);
+                if (this.scene.layers.ground_layer.getTileAt(x, y).index != TILE_VARIANTS.TERRAIN.grass.id) {
+                    x = null
+                    y = null
+                }
+            } while (x == null && y == null)
+
+            const colonist = new Colonist(this.scene, x, y);
+            this.colonists.push(colonist);
+        }
+    }
+
+    addButterflies() {
+        this.scene.butterflies = this.scene.add.group();
+
+        for (let i = 0; i < 10; i++) { // Adjust the number of butterflies
+            const x = Phaser.Math.Between(0, this.scene.mapWidth * this.scene.tileSize);
+            const y = Phaser.Math.Between(0, this.scene.mapHeight * this.scene.tileSize);
+
+            const butterfly = this.scene.butterflies.create(x, y, 'butterfly').play('fly');
+            this.addButterflyMovement(butterfly);
+        }
+    }
+
+    addButterflyMovement(butterfly) {
+        const duration = Phaser.Math.Between(20000, 50000); // Adjust the duration for movement
+
+        this.scene.tweens.add({
+            targets: butterfly,
+            x: {
+                value: () => Phaser.Math.Between(0, this.scene.mapWidth * this.scene.tileSize),
+                duration: duration,
+
+            },
+            y: {
+                value: () => Phaser.Math.Between(0, this.scene.mapHeight * this.scene.tileSize),
+                duration: duration,
+            },
+            onComplete: () => {
+                this.addButterflyMovement(butterfly);
+            }
+        });
+    }
+
+    createAnimations() {
+        this.scene.anims.create({
+            key: 'fly',
+            frames: this.scene.anims.generateFrameNumbers('butterfly', { start: 89, end: 91 }),
+            frameRate: 5,
+            repeat: -1
+        });
+
         this.scene.anims.create({
             key: 'colonist_walk_head_left',
             frames: this.scene.anims.generateFrameNumbers('colonist', { frames: [0, 2, 4, 6, 8, 10, 12, 14] }),
@@ -69,63 +126,5 @@ export default class EntityController {
             frameRate: 10,
             repeat: -1
         });
-
-        const centerX = Math.floor(this.scene.mapWidth / 2);
-        const centerY = Math.floor(this.scene.mapHeight / 2);
-        const spawnRadius = 10
-        for (let i = 0; i < colonistAmount; i++) {
-            let x, y
-            do {
-                x = Phaser.Math.Between(centerX - spawnRadius, centerX + spawnRadius);
-                y = Phaser.Math.Between(centerY - spawnRadius, centerY + spawnRadius);
-                if (this.scene.layers.ground_layer.getTileAt(x, y).index != TILE_VARIANTS.TERRAIN.grass.id) {
-                    x = null
-                    y = null
-                }
-            } while (x == null && y == null)
-
-            const colonist = new Colonist(i, this.scene, x, y);
-            this.colonists.push(colonist);
-        }
     }
-
-    addButterflies() {
-        this.scene.anims.create({
-            key: 'fly',
-            frames: this.scene.anims.generateFrameNumbers('butterfly', { start: 89, end: 91 }),
-            frameRate: 5,
-            repeat: -1
-        });
-
-        this.scene.butterflies = this.scene.add.group();
-
-        for (let i = 0; i < 10; i++) { // Adjust the number of butterflies
-            const x = Phaser.Math.Between(0, this.scene.mapWidth * this.scene.tileSize);
-            const y = Phaser.Math.Between(0, this.scene.mapHeight * this.scene.tileSize);
-
-            const butterfly = this.scene.butterflies.create(x, y, 'butterfly').play('fly');
-            this.animateButterfly(butterfly);
-        }
-    }
-
-    animateButterfly(butterfly) {
-        const duration = Phaser.Math.Between(20000, 50000); // Adjust the duration for movement
-
-        this.scene.tweens.add({
-            targets: butterfly,
-            x: {
-                value: () => Phaser.Math.Between(0, this.scene.mapWidth * this.scene.tileSize),
-                duration: duration,
-
-            },
-            y: {
-                value: () => Phaser.Math.Between(0, this.scene.mapHeight * this.scene.tileSize),
-                duration: duration,
-            },
-            onComplete: () => {
-                this.animateButterfly(butterfly);
-            }
-        });
-    }
-
 }
