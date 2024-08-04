@@ -1,9 +1,9 @@
 import Phaser from 'phaser'
 import tiles from '@/assets/tilesets/forest_tiles_fixed.png'
-import { TerrainGenerator, TILE_VARIANTS } from '../TerrainGenerator'
-import EntityController from '@/game/EntityController'
-import UIController from '@/game/UIController'
-import CameraController from '@/game/CameraController'
+import { TerrainController, TILE_VARIANTS } from '@/game/controllers/TerrainController'
+import EntityController from '@/game/controllers/EntityController'
+import UIController from '@/game/controllers/UIController'
+import CameraController from '@/game/controllers/CameraController'
 import { isTileIdInObject } from '@/game/util'
 
 class MapScene extends Phaser.Scene {
@@ -17,7 +17,7 @@ class MapScene extends Phaser.Scene {
         this.mapHeight = 100
         this.entityController = null
         this.cameraController = null
-        this.terrainGenerator = new TerrainGenerator()
+        this.terrainController = new TerrainController()
         this.entityController = new EntityController(this)
         this.cameraController = null
 
@@ -42,9 +42,9 @@ class MapScene extends Phaser.Scene {
         this.layers.resource_layer = map.createBlankLayer('Resource', tileset)
         this.layers.decoration_layer = map.createBlankLayer('Decoration', tileset)
 
-        const terrain = this.terrainGenerator.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
-        this.terrainGenerator.addResources(terrain)
-        this.terrainGenerator.addDecoration(terrain)
+        const terrain = this.terrainController.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
+        this.terrainController.addResources(terrain)
+        this.terrainController.addDecoration(terrain)
 
         this.renderMap(map, terrain)
 
@@ -92,55 +92,13 @@ class MapScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys()
         this.wasd = this.input.keyboard.addKeys('W,S,A,D')
 
-        this.tooltip = this.add
-            .text(0, 0, '', {
-                fontSize: '16px',
-                backgroundColor: '#000',
-                color: '#fff',
-                padding: { x: 10, y: 5 },
-                alpha: 0
-            })
-            .setOrigin(0.5)
-
-        this.borderGraphics = this.add.graphics()
 
         this.input.on('pointermove', (pointer) => {
             const tileX = map.worldToTileX(pointer.worldX);
             const tileY = map.worldToTileY(pointer.worldY);
 
-            const groundTile = this.layers.ground_layer.getTileAt(tileX, tileY);
-            const resourceTile = this.layers.resource_layer.getTileAt(tileX, tileY);
-            const decorationTile = this.layers.decoration_layer.getTileAt(tileX, tileY);
-
-            if (groundTile || resourceTile || decorationTile) {
-                const tile = groundTile || resourceTile || decorationTile;
-                let layerName = 'Ground'
-                if (resourceTile != null) {
-                    layerName = 'Resource'
-                }
-                if (decorationTile != null) {
-                    layerName = 'Decoration'
-                }
-                this.tooltip
-                    .setText(`Tile: ${terrain[tileY][tileX]}, x: ${tile.x}, y: ${tile.y} layer: ${layerName}`)
-                    .setPosition(pointer.x, pointer.y - 20)
-                    .setAlpha(1);
-                this.borderGraphics.clear();
-                this.borderGraphics.lineStyle(2, 0x00ff00, 1);
-                this.borderGraphics.strokeRect(tileX * this.tileSize, tileY * this.tileSize, this.tileSize, this.tileSize); // Use tileSize
-            }
-            else {
-                this.tooltip.setAlpha(0);
-                this.borderGraphics.clear();
-            }
+            this.UIController.handleTileHoverInfo(tileX, tileY, terrain)
         })
-
-
-        this.input.on('pointerout', () => {
-            this.tooltip.setAlpha(0)
-            this.borderGraphics.clear()
-        })
-
 
         this.input.on('wheel', (pointer, objects, deltaX, deltaY) => {
             this.cameraController.handleZoom(deltaY)

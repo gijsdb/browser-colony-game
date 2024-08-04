@@ -1,12 +1,12 @@
 <template>
   <div>
     <MainMenu v-if="!gameStoreRef.game.value.running" />
-    <Game v-else />
+    <GameContainer v-else />
   </div>
 </template>
 
 <script setup>
-import Game from './components/Game.vue'
+import GameContainer from './components/GameContainer.vue'
 import MainMenu from './components/MainMenu.vue'
 import { storeToRefs } from "pinia";
 import { useGameStore } from "./stores/game.js";

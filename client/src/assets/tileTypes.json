@@ -1,0 +1,73 @@
+{
+    "TERRAIN": {
+        "grass": {
+            "id": 0
+        },
+        "flower": {
+            "id": 16
+        },
+        "dirt": {
+            "id": 5
+        },
+        "mountain": {
+            "id": 23
+        },
+        "WATER": {
+            "water": {
+                "id": 133
+            },
+            "water_edge_top": {
+                "id": 117
+            },
+            "water_edge_bottom": {
+                "id": 149
+            },
+            "water_edge_left": {
+                "id": 132
+            },
+            "water_edge_right": {
+                "id": 134
+            },
+            "water_corner_topleft": {
+                "id": 116
+            },
+            "water_corner_topright": {
+                "id": 118
+            },
+            "water_corner_bottomleft": {
+                "id": 148
+            },
+            "water_corner_bottomright": {
+                "id": 150
+            }
+        }
+    },
+    "RESOURCES": {
+        "tree_trunk": {
+            "id": 42
+        },
+        "tree_top": {
+            "id": 26
+        },
+        "long_grass_one": {
+            "id": 45
+        },
+        "long_grass_two": {
+            "id": 50
+        },
+        "berries": {
+            "id": 52
+        },
+        "mushroom": {
+            "id": 13
+        }
+    },
+    "DECORATION": {
+        "tree_stump": {
+            "id": 54
+        },
+        "flowers": {
+            "id": 2
+        }
+    }
+}

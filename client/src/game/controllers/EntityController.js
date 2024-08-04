@@ -1,5 +1,6 @@
-import { TILE_VARIANTS } from './TerrainGenerator';
-import Colonist from './entity/colonist';
+import Phaser from 'phaser'
+import { TILE_VARIANTS } from '@/game/controllers/TerrainController';
+import Colonist from '@/game/entities/colonist';
 import tiles_img from '@/assets/tilesets/forest_tiles_fixed.png'
 import colonist_img from '@/assets/characters/colonist.png'
 

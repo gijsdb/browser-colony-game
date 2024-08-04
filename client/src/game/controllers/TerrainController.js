@@ -3,7 +3,6 @@ import { createNoise2D } from 'simplex-noise';
 export const TILE_VARIANTS = {
     TERRAIN: {
         grass: { id: 0 },
-        flower: { id: 16 },
         dirt: { id: 5 },
         mountain: { id: 23 },
         WATER: {
@@ -33,7 +32,7 @@ export const TILE_VARIANTS = {
 };
 
 
-export class TerrainGenerator {
+export class TerrainController {
     constructor() {
 
     }

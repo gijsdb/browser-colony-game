@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import GameController from '@/game/GameController'
+import GameController from '@/game/controllers/GameController'
 
 export const useGameStore = defineStore('GameStore', {
     state: () => {
