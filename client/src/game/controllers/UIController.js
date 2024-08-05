@@ -12,6 +12,13 @@ export default class UIController {
             console.log('Event received in Phaser:', data);
             this.scene.cameras.main.shake(500);
         });
+
+        eventBus.value.on('button-order-woodcut', (data) => {
+            console.log('Event received in Phaser:', data);
+            this.scene.cameras.main.shake(500);
+        });
+
+        
     }
 
     handleTileHoverInfo(tileX, tileY, terrain) {
