@@ -11,15 +11,19 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@types/node": "^22.1.0",
     "phaser": "^3.80.1",
     "pinia": "^2.2.0",
     "simplex-noise": "^4.0.2",
+    "typescript": "^5.5.4",
     "unique-names-generator": "^4.7.1",
     "vue": "^3.4.29",
     "vue-router": "^4.3.3"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.8.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
     "@vitejs/plugin-vue": "^5.0.5",
     "@vue/eslint-config-prettier": "^9.0.0",
     "autoprefixer": "^10.4.19",

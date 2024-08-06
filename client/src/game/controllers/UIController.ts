@@ -1,9 +1,14 @@
 import { eventBus } from '@/eventBus';
+import { Terrain } from './TerrainController';
+import MapScene from '../scenes/MapScene';
 
 export default class UIController {
-    constructor(scene) {
+    private scene: MapScene
+    private tileBorderGraphics: Phaser.GameObjects.Graphics | null
+
+    constructor(scene: MapScene) {
         this.scene = scene;
-        this.borderGraphics = this.scene.add.graphics()
+        this.tileBorderGraphics = null
     }
 
     // Listen for events from Vue
@@ -21,10 +26,13 @@ export default class UIController {
         
     }
 
-    handleTileHoverInfo(tileX, tileY, terrain) {
-        const groundTile = this.scene.layers.ground_layer.getTileAt(tileX, tileY);
-        const resourceTile = this.scene.layers.resource_layer.getTileAt(tileX, tileY);
-        const decorationTile = this.scene.layers.decoration_layer.getTileAt(tileX, tileY);
+    handleTileHoverInfo(tileX: number, tileY: number, terrain: Terrain) {
+        if (!this.tileBorderGraphics) {
+            this.tileBorderGraphics = this.scene.add.graphics()
+        }
+        const groundTile = this.scene.layers.ground_layer?.getTileAt(tileX, tileY);
+        const resourceTile = this.scene.layers.resource_layer?.getTileAt(tileX, tileY);
+        const decorationTile = this.scene.layers.decoration_layer?.getTileAt(tileX, tileY);
 
 
         if (groundTile || resourceTile || decorationTile) {
@@ -38,17 +46,17 @@ export default class UIController {
             }
 
             eventBus.value.emit('hover-info',  {
-                tileX: tile.x,
-                tileY: tile.y,
+                tileX: tile?.x,
+                tileY: tile?.y,
                 type: terrain[tileY][tileX],
                 layer: layerName
             }) 
-            this.borderGraphics.clear();
-            this.borderGraphics.lineStyle(2, 0x00ff00, 1);
-            this.borderGraphics.strokeRect(tileX * 32, tileY * 32, 32, 32); 
+            this.tileBorderGraphics.clear();
+            this.tileBorderGraphics.lineStyle(2, 0x00ff00, 1);
+            this.tileBorderGraphics.strokeRect(tileX * 32, tileY * 32, 32, 32); 
         }
         else {
-            this.borderGraphics.clear();
+            this.tileBorderGraphics.clear();
         }
 
     }
