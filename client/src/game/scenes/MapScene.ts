@@ -20,22 +20,20 @@ interface KeyBindings {
   }
 
 class MapScene extends Phaser.Scene {
-    private colonistAmount: number
     public layers: Layers
     public tileSize : number
     public mapWidth : number
     public mapHeight : number
-    private entityController : EntityController | null
-    private cameraController : CameraController | null
-    private terrainController : TerrainController
-    private uiController : UIController
+    private entityController? : EntityController
+    private cameraController? : CameraController
+    private terrainController? : TerrainController
+    private uiController? : UIController
     private wasd : KeyBindings | undefined
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined
 
-    constructor(colonistAmount: number) {
+    constructor() {
         super({ key: 'MapScene' })
-
-        this.colonistAmount = colonistAmount || 1
+       
         this.layers = {
             ground_layer: null,
             resource_layer: null,
@@ -44,29 +42,33 @@ class MapScene extends Phaser.Scene {
         this.tileSize = 32
         this.mapWidth = 100
         this.mapHeight = 100
-        this.entityController = null
-        this.cameraController = null
-        this.terrainController = new TerrainController() 
-        this.entityController = new EntityController()
-        this.uiController = new UIController(this)
         this.wasd = undefined
         this.cursors = undefined
+    }   
 
-        console.log("loading map with colonist amount: ", this.colonistAmount)
-    }
+  
 
     preload() {
         this.load.image('tiles', tiles)
-        this.entityController?.preload()
     }
 
     create() {
+        let data = this.sys.getData()
         const map = this.make.tilemap({
             tileWidth: this.tileSize,
             tileHeight: this.tileSize,
             width: this.mapWidth,
             height: this.mapHeight
         })
+
+        this.entityController = data.entityController
+        this.terrainController = data.terrainController
+        this.uiController = data.uiController
+        this.cameraController = data.cameraController
+
+        if (!this.terrainController || !this.entityController || !this.uiController || !this.cameraController) {
+            throw Error("no controllers provided")
+        }
 
         const tileset = map.addTilesetImage('tileset-name', 'tiles', 32, 32, 1, 2)
         if (!tileset) {
@@ -87,14 +89,9 @@ class MapScene extends Phaser.Scene {
 
         this.entityController?.createAnimations()
         this.entityController?.addButterflies()
-        this.entityController?.addColonists(this.colonistAmount)
-
-        this.cameraController = new CameraController(this.cameras.main, this.mapWidth, this.mapHeight, this.tileSize, 1, 0.1)
+        this.entityController?.addColonists()
 
         this.setInputHandlers(map, terrain)
-
-        //this.UIController = new UIController(this)
-        this.uiController.listen()
     }
 
     renderMap(map: Phaser.Tilemaps.Tilemap, terrain: Terrain) {
@@ -140,7 +137,7 @@ class MapScene extends Phaser.Scene {
                 throw Error("tile undefined pointermove")
             }
 
-            this.uiController.handleTileHoverInfo(tileX, tileY, terrain)
+            this.uiController!.handleTileHoverInfo(tileX, tileY, terrain)
         })
 
         this.input.on('wheel', (pointer: any, objects: any, deltaX: number, deltaY: number) => {

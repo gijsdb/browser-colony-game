@@ -8,17 +8,20 @@ import MapScene from '../scenes/MapScene';
 
 export default class EntityController {
     private scene : MapScene | null
+    private colonistAmount: number
     private colonists: Array<Colonist>
     private butterflies: Phaser.GameObjects.Group | undefined
 
-    constructor() {
+    constructor(colonistAmount: number) {
         this.scene = null;
         this.colonists = [];
         this.butterflies = undefined
+        this.colonistAmount = colonistAmount
     }
 
-    setScene(scene: Phaser.Scene): void {
+    setScene(scene: MapScene): void {
         this.scene = scene as MapScene;
+        this.preload()
     }
 
     preload() {
@@ -41,11 +44,11 @@ export default class EntityController {
 
     }
 
-    addColonists(colonistAmount: number) {
+    addColonists() {
         const centerX = Math.floor(this.scene!.mapWidth / 2);
         const centerY = Math.floor(this.scene!.mapHeight / 2);
         const spawnRadius = 10
-        for (let i = 0; i < colonistAmount; i++) {
+        for (let i = 0; i < this.colonistAmount; i++) {
             let x, y
             do {
                 x = Phaser.Math.Between(centerX - spawnRadius, centerX + spawnRadius);

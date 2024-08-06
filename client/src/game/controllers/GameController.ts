@@ -1,18 +1,28 @@
 import Phaser from 'phaser';
 import MapScene from '../scenes/MapScene';
 import EntityController from './EntityController';
+import { TerrainController } from './TerrainController';
+import UIController from './UIController';
+import CameraController from './CameraController';
 
 export default class GameController {
     private game: Phaser.Game | null
     private entityController: EntityController
+    private terrainController: TerrainController
+    private uiController: UIController
+    private cameraController: CameraController
 
     constructor(colonistAmount: number) {
-        this.entityController = new EntityController();
+        this.entityController = new EntityController(colonistAmount);
+        this.terrainController = new TerrainController(); 
+        this.uiController = new UIController();
+        this.cameraController = new CameraController()
+
         const config = {
             type: Phaser.AUTO,
             width: window.innerWidth,
             height: window.innerHeight,
-            scene: new MapScene(colonistAmount),
+            //scene: new MapScene(colonistAmount),
             scale: {
                 mode: Phaser.Scale.RESIZE,
                 autoCenter: Phaser.Scale.CENTER_BOTH
@@ -21,11 +31,11 @@ export default class GameController {
             transparent: true,
             callbacks: {
                 preBoot: (game: Phaser.Game) => {
-                    game.scene.add('MapScene', MapScene, true, { colonistAmount });
+                    game.scene.add('MapScene', MapScene, true, {entityController: this.entityController, terrainController: this.terrainController, uiController: this.uiController, cameraController: this.cameraController});
                 },
                 postBoot: (game: Phaser.Game) => {
-                    const scene = game.scene.getScene('MapScene');
-                    this.setupControllers(scene);
+                    const scene = game.scene.getScene('MapScene') as MapScene;
+                    this.provideSceneToControllers(scene);
                 }
             }
         };
@@ -33,8 +43,10 @@ export default class GameController {
         this.game = new Phaser.Game(config)
     }
 
-    private setupControllers(scene: Phaser.Scene): void {
+    private provideSceneToControllers(scene: MapScene): void {
         this.entityController.setScene(scene);
+        this.uiController.setScene(scene)
+        this.cameraController.setScene(scene)
         // Set the scene for other controllers here
     }
 
