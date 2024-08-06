@@ -67,10 +67,10 @@ export type Terrain = number[][];
 
 export class TerrainController {
     constructor() {
-
+ 
     }
 
-    generateTerrainPerlinNoise(width: number, height: number) {
+    generateTerrainPerlinNoise(width: number, height: number) : Terrain {
         const noise = createNoise2D();
         let terrain: Terrain = [];
         for (let y = 0; y < height; y++) {
@@ -96,7 +96,7 @@ export class TerrainController {
         return terrain;
     }
 
-    addResources(terrain: Terrain, treeDensity = 0.05) {
+    addResources(terrain: Terrain, treeDensity = 0.05) : Terrain {
         const width = terrain[0].length;
         const height = terrain.length;
         const resourcePositions = [];
@@ -131,7 +131,7 @@ export class TerrainController {
         return terrain;
     }
 
-    addDecoration(terrain: Terrain) {
+    addDecoration(terrain: Terrain): Terrain {
         const width = terrain[0].length;
         const height = terrain.length;
 
@@ -151,7 +151,7 @@ export class TerrainController {
     }
 
     // Check if there's a resource in the immediate vicinity (including diagonals)
-    isResourceNearby(resourcePositions: Array<any>, x: number, y: number) {
+    isResourceNearby(resourcePositions: Array<any>, x: number, y: number) : boolean {
         for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
                 if (resourcePositions.some(resource => resource.x === x + i && resource.y === y + j)) {
@@ -162,7 +162,7 @@ export class TerrainController {
         return false;
     }
 
-    smoothTerrain(terrain: Terrain, passes = 2) {
+    smoothTerrain(terrain: Terrain, passes = 2): Terrain {
         const width = terrain[0].length;
         const height = terrain.length;
         const smoothed = JSON.parse(JSON.stringify(terrain));
@@ -186,7 +186,7 @@ export class TerrainController {
         return terrain;
     }
 
-    removeSmallWaterBodies(terrain: Terrain, minSize: number) {
+    removeSmallWaterBodies(terrain: Terrain, minSize: number) : Terrain {
         const width = terrain[0].length;
         const height = terrain.length;
         const visited = Array(height).fill(false).map(() => Array(width).fill(false));
@@ -208,7 +208,7 @@ export class TerrainController {
     }
 
     //  identify and measure the size of water bodies
-    floodFill(terrain: Terrain, startX:number, startY:number, visited: Array<any>) {
+    floodFill(terrain: Terrain, startX:number, startY:number, visited: Array<any>): number[][] {
         const width = terrain[0].length;
         const height = terrain.length;
         const waterBody = [];
@@ -229,7 +229,7 @@ export class TerrainController {
         return waterBody;
     }
 
-    applyWaterEdges(terrain: Terrain) {
+    applyWaterEdges(terrain: Terrain) : Terrain {
         for (let y = 0; y < terrain.length; y++) {
             for (let x = 0; x < terrain[y].length; x++) {
                 if (terrain[y][x] === TILE_VARIANTS.TERRAIN.WATER.water.id) {
@@ -248,7 +248,7 @@ export class TerrainController {
         return terrain[y][x];
     }
 
-    getWaterEdgeTile(terrain: Terrain, x: number, y: number) {
+    getWaterEdgeTile(terrain: Terrain, x: number, y: number): number {
         const waterTiles = [
             TILE_VARIANTS.TERRAIN.WATER.water.id,
             TILE_VARIANTS.TERRAIN.WATER.water_edge_top.id,
