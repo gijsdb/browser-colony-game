@@ -1,6 +1,38 @@
 import { createNoise2D } from 'simplex-noise';
 
-export const TILE_VARIANTS = {
+interface TILE_VARIANTSI {
+    TERRAIN: {
+        grass: { id: number },
+        dirt: { id: number },
+        mountain: { id: number },
+        WATER: {
+            water: { id: number},
+            water_edge_top: { id: number},
+            water_edge_bottom: { id: number},
+            water_edge_left: { id: number},
+            water_edge_right: { id: number},
+            water_corner_topleft: { id: number},
+            water_corner_topright: { id: number},
+            water_corner_bottomleft: { id: number},
+            water_corner_bottomright: { id: number},
+        }
+    },
+    RESOURCES: {
+        tree_trunk: { id: number },
+        tree_top: { id: number },
+        long_grass_one: { id: number },
+        long_grass_two: { id: number },
+        berries: { id: number },
+        mushroom: { id: number }
+    },
+    DECORATION: {
+        tree_stump: { id: number },
+        flowers: { id: number }
+    }
+};
+
+
+export const TILE_VARIANTS: TILE_VARIANTSI = {
     TERRAIN: {
         grass: { id: 0 },
         dirt: { id: 5 },
@@ -31,15 +63,16 @@ export const TILE_VARIANTS = {
     }
 };
 
+export type Terrain = number[][];
 
 export class TerrainController {
     constructor() {
-
+ 
     }
 
-    generateTerrainPerlinNoise(width, height) {
+    generateTerrainPerlinNoise(width: number, height: number) : Terrain {
         const noise = createNoise2D();
-        let terrain = [];
+        let terrain: Terrain = [];
         for (let y = 0; y < height; y++) {
             terrain[y] = [];
             for (let x = 0; x < width; x++) {
@@ -63,7 +96,7 @@ export class TerrainController {
         return terrain;
     }
 
-    addResources(terrain, treeDensity = 0.05) {
+    addResources(terrain: Terrain, treeDensity = 0.05) : Terrain {
         const width = terrain[0].length;
         const height = terrain.length;
         const resourcePositions = [];
@@ -98,7 +131,7 @@ export class TerrainController {
         return terrain;
     }
 
-    addDecoration(terrain) {
+    addDecoration(terrain: Terrain): Terrain {
         const width = terrain[0].length;
         const height = terrain.length;
 
@@ -118,7 +151,7 @@ export class TerrainController {
     }
 
     // Check if there's a resource in the immediate vicinity (including diagonals)
-    isResourceNearby(resourcePositions, x, y) {
+    isResourceNearby(resourcePositions: Array<any>, x: number, y: number) : boolean {
         for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
                 if (resourcePositions.some(resource => resource.x === x + i && resource.y === y + j)) {
@@ -129,7 +162,7 @@ export class TerrainController {
         return false;
     }
 
-    smoothTerrain(terrain, passes = 2) {
+    smoothTerrain(terrain: Terrain, passes = 2): Terrain {
         const width = terrain[0].length;
         const height = terrain.length;
         const smoothed = JSON.parse(JSON.stringify(terrain));
@@ -153,10 +186,10 @@ export class TerrainController {
         return terrain;
     }
 
-    removeSmallWaterBodies(terrain, minSize) {
+    removeSmallWaterBodies(terrain: Terrain, minSize: number) : Terrain {
         const width = terrain[0].length;
         const height = terrain.length;
-        const visited = Array(height).fill().map(() => Array(width).fill(false));
+        const visited = Array(height).fill(false).map(() => Array(width).fill(false));
 
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
@@ -175,14 +208,14 @@ export class TerrainController {
     }
 
     //  identify and measure the size of water bodies
-    floodFill(terrain, startX, startY, visited) {
+    floodFill(terrain: Terrain, startX:number, startY:number, visited: Array<any>): number[][] {
         const width = terrain[0].length;
         const height = terrain.length;
         const waterBody = [];
         const stack = [[startX, startY]];
 
         while (stack.length > 0) {
-            const [x, y] = stack.pop();
+            const [x, y] = stack.pop() || [0,0];
             if (x < 0 || x >= width || y < 0 || y >= height || visited[y][x] || terrain[y][x] !== TILE_VARIANTS.TERRAIN.WATER.water.id) {
                 continue;
             }
@@ -196,7 +229,7 @@ export class TerrainController {
         return waterBody;
     }
 
-    applyWaterEdges(terrain) {
+    applyWaterEdges(terrain: Terrain) : Terrain {
         for (let y = 0; y < terrain.length; y++) {
             for (let x = 0; x < terrain[y].length; x++) {
                 if (terrain[y][x] === TILE_VARIANTS.TERRAIN.WATER.water.id) {
@@ -208,14 +241,14 @@ export class TerrainController {
         return terrain
     }
 
-    getTile(terrain, x, y) {
+    getTile(terrain:Array<any>, x: number, y: number) {
         if (x < 0 || y < 0 || x >= terrain[0].length || y >= terrain.length) {
             return null;
         }
         return terrain[y][x];
     }
 
-    getWaterEdgeTile(terrain, x, y) {
+    getWaterEdgeTile(terrain: Terrain, x: number, y: number): number {
         const waterTiles = [
             TILE_VARIANTS.TERRAIN.WATER.water.id,
             TILE_VARIANTS.TERRAIN.WATER.water_edge_top.id,
@@ -228,7 +261,7 @@ export class TerrainController {
             TILE_VARIANTS.TERRAIN.WATER.water_corner_bottomright.id
         ];
 
-        const isWater = (x, y) => {
+        const isWater = (x: number, y: number) => {
             const tile = this.getTile(terrain, x, y);
             return tile !== null && waterTiles.includes(tile);
         };

@@ -5,13 +5,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import GameContainer from './components/GameContainer.vue'
 import MainMenu from './components/MainMenu.vue'
-import { storeToRefs } from "pinia";
-import { useGameStore } from "./stores/game.js";
+import { storeToRefs } from 'pinia'
+import { useGameStore } from './stores/game'
 
-
-const gameStore = useGameStore();
-let gameStoreRef = storeToRefs(gameStore);
+const gameStore = useGameStore()
+let gameStoreRef = storeToRefs(gameStore)
 </script>

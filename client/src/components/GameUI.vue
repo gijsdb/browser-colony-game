@@ -35,9 +35,16 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { eventBus } from '@/eventBus'
+
+type tileInfo = {
+  tileX: string
+  tileY: string
+  type: string
+  layer: string
+}
 
 let tileInfo = ref({
   tileX: '',
@@ -57,11 +64,11 @@ const handleClick = () => {
 }
 
 const handleWoodcutClick = () => {
-  eventBus.value.emit('button-order-woodcut', null)
+  eventBus.value.emit('button-order-woodcut', {})
   showOrdersMenu.value = false
 }
 
-eventBus.value.on('hover-info', (data) => {
+eventBus.value.on('hover-info', (data: any) => {
   tileInfo.value = data
 })
 </script>
