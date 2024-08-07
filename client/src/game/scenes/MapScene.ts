@@ -12,13 +12,6 @@ type Layers = {
   decoration_layer: Phaser.Tilemaps.TilemapLayer | null
 }
 
-interface KeyBindings {
-  W: Phaser.Input.Keyboard.Key
-  S: Phaser.Input.Keyboard.Key
-  A: Phaser.Input.Keyboard.Key
-  D: Phaser.Input.Keyboard.Key
-}
-
 class MapScene extends Phaser.Scene {
   public layers: Layers
   public tileSize: number
@@ -28,8 +21,8 @@ class MapScene extends Phaser.Scene {
   private cameraController?: CameraController
   private terrainController?: TerrainController
   private uiController?: UIController
-  private wasd: KeyBindings | undefined
-  private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined
+  private terrain: Terrain
+  private map: Phaser.Tilemaps.Tilemap | undefined
 
   constructor() {
     super({ key: 'MapScene' })
@@ -42,8 +35,7 @@ class MapScene extends Phaser.Scene {
     this.tileSize = 32
     this.mapWidth = 100
     this.mapHeight = 100
-    this.wasd = undefined
-    this.cursors = undefined
+    this.terrain = []
   }
 
   preload() {
@@ -52,7 +44,7 @@ class MapScene extends Phaser.Scene {
 
   create() {
     let data = this.sys.getData()
-    const map = this.make.tilemap({
+    this.map = this.make.tilemap({
       tileWidth: this.tileSize,
       tileHeight: this.tileSize,
       width: this.mapWidth,
@@ -73,28 +65,28 @@ class MapScene extends Phaser.Scene {
       throw Error('no controllers provided')
     }
 
-    const tileset = map.addTilesetImage('tileset-name', 'tiles', 32, 32, 1, 2)
+    const tileset = this.map.addTilesetImage('tileset-name', 'tiles', 32, 32, 1, 2)
     if (!tileset) {
       throw Error('failed to load tileset')
     }
-    this.layers.ground_layer = map.createBlankLayer('Ground', tileset)
-    this.layers.resource_layer = map.createBlankLayer('Resource', tileset)
-    this.layers.decoration_layer = map.createBlankLayer('Decoration', tileset)
+    this.layers.ground_layer = this.map.createBlankLayer('Ground', tileset)
+    this.layers.resource_layer = this.map.createBlankLayer('Resource', tileset)
+    this.layers.decoration_layer = this.map.createBlankLayer('Decoration', tileset)
     if (!this.layers.ground_layer || !this.layers.resource_layer || !this.layers.decoration_layer) {
       throw Error('failed to create layers')
     }
 
-    let terrain = this.terrainController.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
-    terrain = this.terrainController.addResources(terrain)
-    terrain = this.terrainController.addDecoration(terrain)
+    this.terrain = this.terrainController.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
+    this.terrain = this.terrainController.addResources(this.terrain)
+    this.terrain = this.terrainController.addDecoration(this.terrain)
 
-    this.renderMap(map, terrain)
+    this.renderMap(this.map, this.terrain)
 
     this.entityController?.createAnimations()
     this.entityController?.addButterflies()
     this.entityController?.addColonists()
 
-    this.setInputHandlers(map, terrain)
+    this.uiController?.setUpInputHandlers(this.map, this.terrain)
   }
 
   renderMap(map: Phaser.Tilemaps.Tilemap, terrain: Terrain) {
@@ -115,40 +107,8 @@ class MapScene extends Phaser.Scene {
   }
 
   update() {
-    if (this.cameraController) {
-      this.cameraController.update(
-        this.wasd?.W.isDown || false,
-        this.wasd?.S.isDown || false,
-        this.wasd?.A.isDown || false,
-        this.wasd?.D.isDown || false
-      )
-    }
-
-    if (this.entityController) {
-      this.entityController.update()
-    }
-  }
-
-  setInputHandlers(map: Phaser.Tilemaps.Tilemap, terrain: Terrain) {
-    if (!this.input.keyboard) {
-      throw Error('no keyboard')
-    }
-    this.cursors = this.input.keyboard.createCursorKeys()
-    this.wasd = this.input.keyboard.addKeys('W,S,A,D') as KeyBindings
-
-    this.input.on('pointermove', (pointer: any) => {
-      const tileX = map.worldToTileX(pointer.worldX)
-      const tileY = map.worldToTileY(pointer.worldY)
-      if (!tileX || !tileY) {
-        throw Error('tile undefined pointermove')
-      }
-
-      this.uiController!.handleTileHoverInfo(tileX, tileY, terrain)
-    })
-
-    this.input.on('wheel', (pointer: any, objects: any, deltaX: number, deltaY: number) => {
-      this.cameraController?.handleZoom(deltaY)  
-    })
+    this.cameraController!.update()
+    this.entityController!.update()
   }
 }
 

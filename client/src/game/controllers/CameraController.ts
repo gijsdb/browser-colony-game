@@ -1,6 +1,13 @@
 import Phaser from 'phaser'
 import MapScene from '../scenes/MapScene'
 
+export default interface KeyBindings {
+  W: Phaser.Input.Keyboard.Key
+  S: Phaser.Input.Keyboard.Key
+  A: Phaser.Input.Keyboard.Key
+  D: Phaser.Input.Keyboard.Key
+}
+
 export default class CameraController {
   private scene?: MapScene
   private camera?: Phaser.Cameras.Scene2D.Camera
@@ -11,6 +18,8 @@ export default class CameraController {
   private zoomSpeed: number
   private centerXPixels?: number
   private centerYPixels?: number
+  private wasd: KeyBindings | undefined
+  private cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys | undefined
 
   constructor() {
     this.targetZoom = 1
@@ -28,21 +37,33 @@ export default class CameraController {
     this.camera.setBounds(0, 0, this.mapWidth * this.tileSize, this.mapHeight * this.tileSize)
     this.camera.scrollX = this.centerXPixels - this.camera.width / 2
     this.camera.scrollY = this.centerYPixels - this.camera.height / 2
+    this.setUpInputHandlers()
   }
 
-  update(wDown: boolean, sDown: boolean, aDown: boolean, dDown: boolean) {
+  setUpInputHandlers() {
+    if (!this.scene!.input.keyboard) {
+      throw Error('no keyboard')
+    }
+    this.cursorKeys = this.scene!.input.keyboard.createCursorKeys()
+    this.wasd = this.scene!.input.keyboard.addKeys('W,S,A,D') as KeyBindings
+    this.scene?.input.on('wheel', (pointer: any, objects: any, deltaX: number, deltaY: number) => {
+      this.handleZoom(deltaY)
+    })
+  }
+
+  update() {
     if (this.targetZoom > 0.8) {
       this.camera!.zoom += (this.targetZoom - this.camera!.zoom) * this.zoomSpeed
     }
-    if (wDown) {
+    if (this.wasd?.W.isDown) {
       this.camera!.scrollY -= 15
-    } else if (sDown) {
+    } else if (this.wasd?.S.isDown) {
       this.camera!.scrollY += 15
     }
 
-    if (aDown) {
+    if (this.wasd?.A.isDown) {
       this.camera!.scrollX -= 15
-    } else if (dDown) {
+    } else if (this.wasd?.D.isDown) {
       this.camera!.scrollX += 15
     }
   }

@@ -13,6 +13,7 @@ export default class UIController {
 
   setScene(scene: MapScene): void {
     this.scene = scene as MapScene
+    this.scene.input.setDefaultCursor('url(./src/assets/cursors/pointer.svg), pointer')
     this.listen()
   }
 
@@ -26,10 +27,21 @@ export default class UIController {
     eventBus.value.on('button-order-woodcut', (data) => {
       console.log('Event received in Phaser:', data)
       this.scene!.cameras.main.shake(500)
+      this.scene.input.setDefaultCursor('url(./src/assets/cursors/tool_axe.svg), pointer')
     })
   }
 
-  setUpInputListeners() {}
+  setUpInputHandlers(map: Phaser.Tilemaps.Tilemap, terrain: Terrain) {
+    this.scene!.input.on('pointermove', (pointer: any) => {
+      const tileX = map!.worldToTileX(pointer.worldX)
+      const tileY = map!.worldToTileY(pointer.worldY)
+      if (!tileX || !tileY) {
+        throw Error('tile undefined pointermove')
+      }
+
+      this.handleTileHoverInfo(tileX, tileY, terrain!)
+    })
+  }
 
   handleTileHoverInfo(tileX: number, tileY: number, terrain: Terrain) {
     if (!this.tileBorderGraphics) {
