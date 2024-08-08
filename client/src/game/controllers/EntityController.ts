@@ -1,19 +1,24 @@
 import Phaser from 'phaser'
-import { TILE_VARIANTS } from '@/game/controllers/TerrainController'
+import { Terrain, TILE_VARIANTS } from '@/game/controllers/TerrainController'
 import Colonist from '@/game/entities/colonist'
 import tiles_img from '@/assets/tilesets/forest_tiles_fixed.png'
 import colonist_img from '@/assets/characters/colonist.png'
 import MapScene from '../scenes/MapScene'
+import Resource from '../entities/resources/resource'
+import Mushroom from '../entities/resources/mushroom'
+import Tree from '../entities/resources/tree'
 
 export default class EntityController {
   private scene: MapScene | null
   private colonistAmount: number
   private colonists: Array<Colonist>
+  private resources: Array<Resource>
   private butterflies: Phaser.GameObjects.Group | undefined
 
   constructor(colonistAmount: number) {
     this.scene = null
     this.colonists = []
+    this.resources = []
     this.butterflies = undefined
     this.colonistAmount = colonistAmount
   }
@@ -24,16 +29,16 @@ export default class EntityController {
   }
 
   preload() {
-    this.scene?.load.image('colonists', colonist_img)
+    this.scene!.load.image('colonists', colonist_img)
 
-    this.scene?.load.spritesheet('butterfly', tiles_img, {
+    this.scene!.load.spritesheet('butterfly', tiles_img, {
       frameWidth: 32,
       frameHeight: 32,
       margin: 1,
       spacing: 2
     })
 
-    this.scene?.load.spritesheet('colonist', colonist_img, {
+    this.scene!.load.spritesheet('colonist', colonist_img, {
       frameWidth: 16,
       frameHeight: 16
     })
@@ -63,6 +68,25 @@ export default class EntityController {
     }
   }
 
+  // not ideal, loop already happens in TerrainGenerator
+  initResources(terrain: Terrain) {
+    const width = terrain[0].length
+    const height = terrain.length
+
+    for (let y = 1; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (terrain[y][x] === TILE_VARIANTS.RESOURCES.mushroom.id) {
+          this.resources.push(new Mushroom(x, y))
+        } else if (terrain[y][x] === TILE_VARIANTS.RESOURCES.tree_trunk.id) {
+          this.resources.push(new Tree(x, y))
+        } else if (terrain[y][x] === TILE_VARIANTS.RESOURCES.berries.id) {
+        }
+      }
+    }
+    console.log(this.resources)
+  }
+
+  // butterflies arent an entity just deco needs to move
   addButterflies() {
     this.butterflies = this.scene!.add.group()
     for (let i = 0; i < 10; i++) {

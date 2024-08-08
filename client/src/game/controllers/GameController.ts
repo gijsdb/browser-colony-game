@@ -4,6 +4,7 @@ import EntityController from './EntityController'
 import { TerrainController } from './TerrainController'
 import UIController from './UIController'
 import CameraController from './CameraController'
+import OrderController from './OrderController'
 
 export default class GameController {
   private game: Phaser.Game | null
@@ -11,11 +12,13 @@ export default class GameController {
   private terrainController: TerrainController
   private uiController: UIController
   private cameraController: CameraController
+  private orderController: OrderController
 
   constructor(colonistAmount: number) {
+    this.orderController = new OrderController()
     this.entityController = new EntityController(colonistAmount)
     this.terrainController = new TerrainController()
-    this.uiController = new UIController()
+    this.uiController = new UIController(this.orderController)
     this.cameraController = new CameraController()
 
     const config = {

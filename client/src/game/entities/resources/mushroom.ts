@@ -1,7 +1,7 @@
 import Resource from './resource'
 
 export default class Mushroom extends Resource {
-  constructor() {
-    super()
+  constructor(x: number, y: number) {
+    super([13], x, y)
   }
 }

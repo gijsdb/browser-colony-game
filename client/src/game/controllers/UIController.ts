@@ -1,14 +1,17 @@
 import { eventBus } from '@/eventBus'
 import { Terrain } from './TerrainController'
 import MapScene from '../scenes/MapScene'
+import OrderController from './OrderController'
 
 export default class UIController {
   private scene: MapScene | null
   private tileBorderGraphics: Phaser.GameObjects.Graphics | null
+  private orderController: OrderController
 
-  constructor() {
+  constructor(orderController: OrderController) {
     this.scene = null
     this.tileBorderGraphics = null
+    this.orderController = orderController
   }
 
   setScene(scene: MapScene): void {
@@ -26,8 +29,8 @@ export default class UIController {
 
     eventBus.value.on('button-order-woodcut', (data) => {
       console.log('Event received in Phaser:', data)
-      this.scene!.cameras.main.shake(500)
-      this.scene.input.setDefaultCursor('url(./src/assets/cursors/tool_axe.svg), pointer')
+      this.scene!.input.setDefaultCursor('url(./src/assets/cursors/tool_axe.svg), pointer')
+      this.orderController.handleOrderWoodcut()
     })
   }
 
@@ -35,11 +38,8 @@ export default class UIController {
     this.scene!.input.on('pointermove', (pointer: any) => {
       const tileX = map!.worldToTileX(pointer.worldX)
       const tileY = map!.worldToTileY(pointer.worldY)
-      if (!tileX || !tileY) {
-        throw Error('tile undefined pointermove')
-      }
 
-      this.handleTileHoverInfo(tileX, tileY, terrain!)
+      this.handleTileHoverInfo(tileX!, tileY!, terrain!)
     })
   }
 

@@ -42,14 +42,8 @@ class MapScene extends Phaser.Scene {
     this.load.image('tiles', tiles)
   }
 
-  create() {
+  initControllers() {
     let data = this.sys.getData()
-    this.map = this.make.tilemap({
-      tileWidth: this.tileSize,
-      tileHeight: this.tileSize,
-      width: this.mapWidth,
-      height: this.mapHeight
-    })
 
     this.entityController = data.entityController
     this.terrainController = data.terrainController
@@ -62,9 +56,19 @@ class MapScene extends Phaser.Scene {
       !this.uiController ||
       !this.cameraController
     ) {
-      throw Error('no controllers provided')
+      throw Error('no controllers provided to scene')
     }
+  }
 
+  create() {
+    this.initControllers()
+
+    this.map = this.make.tilemap({
+      tileWidth: this.tileSize,
+      tileHeight: this.tileSize,
+      width: this.mapWidth,
+      height: this.mapHeight
+    })
     const tileset = this.map.addTilesetImage('tileset-name', 'tiles', 32, 32, 1, 2)
     if (!tileset) {
       throw Error('failed to load tileset')
@@ -76,17 +80,18 @@ class MapScene extends Phaser.Scene {
       throw Error('failed to create layers')
     }
 
-    this.terrain = this.terrainController.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
-    this.terrain = this.terrainController.addResources(this.terrain)
-    this.terrain = this.terrainController.addDecoration(this.terrain)
+    this.terrain = this.terrainController!.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
+    this.terrain = this.terrainController!.addResourcesToTerrain(this.terrain)
+    this.terrain = this.terrainController!.addDecoration(this.terrain)
 
     this.renderMap(this.map, this.terrain)
 
-    this.entityController?.createAnimations()
-    this.entityController?.addButterflies()
-    this.entityController?.addColonists()
+    this.entityController!.createAnimations()
+    this.entityController!.addButterflies()
+    this.entityController!.addColonists()
+    this.entityController!.initResources(this.terrain)
 
-    this.uiController?.setUpInputHandlers(this.map, this.terrain)
+    this.uiController!.setUpInputHandlers(this.map, this.terrain)
   }
 
   renderMap(map: Phaser.Tilemaps.Tilemap, terrain: Terrain) {
@@ -94,13 +99,13 @@ class MapScene extends Phaser.Scene {
       for (let x = 0; x < this.mapWidth; x++) {
         const tileId = terrain[y][x]
         if (isTileIdInObject(tileId, TILE_VARIANTS.TERRAIN)) {
-          map.putTileAt(tileId, x, y, false, this.layers.ground_layer || 0)
+          map.putTileAt(tileId, x, y, false, this.layers.ground_layer!)
         } else if (isTileIdInObject(tileId, TILE_VARIANTS.RESOURCES)) {
           this.layers.ground_layer?.putTileAt(TILE_VARIANTS.TERRAIN.grass.id, x, y)
-          map.putTileAt(tileId, x, y, false, this.layers.resource_layer || 0)
+          map.putTileAt(tileId, x, y, false, this.layers.resource_layer!)
         } else if (isTileIdInObject(tileId, TILE_VARIANTS.DECORATION)) {
           this.layers.ground_layer?.putTileAt(TILE_VARIANTS.TERRAIN.grass.id, x, y)
-          map.putTileAt(tileId, x, y, false, this.layers.decoration_layer || 0)
+          map.putTileAt(tileId, x, y, false, this.layers.decoration_layer!)
         }
       }
     }
