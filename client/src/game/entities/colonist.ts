@@ -1,4 +1,3 @@
-import MapScene from '../scenes/MapScene'
 import { GameStoreType, useGameStore } from '@/stores/game'
 import { generateColonistName } from '../util'
 

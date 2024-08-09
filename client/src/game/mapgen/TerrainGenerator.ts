@@ -1,70 +1,9 @@
 import { createNoise2D } from 'simplex-noise'
-
-interface TILE_VARIANTSI {
-  TERRAIN: {
-    grass: { id: number }
-    dirt: { id: number }
-    mountain: { id: number }
-    WATER: {
-      water: { id: number }
-      water_edge_top: { id: number }
-      water_edge_bottom: { id: number }
-      water_edge_left: { id: number }
-      water_edge_right: { id: number }
-      water_corner_topleft: { id: number }
-      water_corner_topright: { id: number }
-      water_corner_bottomleft: { id: number }
-      water_corner_bottomright: { id: number }
-    }
-  }
-  RESOURCES: {
-    tree_trunk: { id: number }
-    tree_top: { id: number }
-    long_grass_one: { id: number }
-    long_grass_two: { id: number }
-    berries: { id: number }
-    mushroom: { id: number }
-  }
-  DECORATION: {
-    tree_stump: { id: number }
-    flowers: { id: number }
-  }
-}
-
-export const TILE_VARIANTS: TILE_VARIANTSI = {
-  TERRAIN: {
-    grass: { id: 0 },
-    dirt: { id: 5 },
-    mountain: { id: 23 },
-    WATER: {
-      water: { id: 133 },
-      water_edge_top: { id: 117 },
-      water_edge_bottom: { id: 149 },
-      water_edge_left: { id: 132 },
-      water_edge_right: { id: 134 },
-      water_corner_topleft: { id: 116 },
-      water_corner_topright: { id: 118 },
-      water_corner_bottomleft: { id: 148 },
-      water_corner_bottomright: { id: 150 }
-    }
-  },
-  RESOURCES: {
-    tree_trunk: { id: 42 },
-    tree_top: { id: 26 },
-    long_grass_one: { id: 45 },
-    long_grass_two: { id: 50 },
-    berries: { id: 52 },
-    mushroom: { id: 13 }
-  },
-  DECORATION: {
-    tree_stump: { id: 54 },
-    flowers: { id: 2 }
-  }
-}
+import { TILE_VARIANTS } from './TileVariants'
 
 export type Terrain = number[][]
 
-export class TerrainController {
+export class TerrainGenerator {
   constructor() {}
 
   generateTerrainPerlinNoise(width: number, height: number): Terrain {
@@ -75,13 +14,13 @@ export class TerrainController {
       for (let x = 0; x < width; x++) {
         const value = noise(x / 35, y / 35)
         if (value < -0.7) {
-          terrain[y][x] = TILE_VARIANTS.TERRAIN.WATER.water.id
+          terrain[y][x] = TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CENTER.TILE_MAP_INDEX
         } else if (value < 0) {
-          terrain[y][x] = TILE_VARIANTS.TERRAIN.grass.id
+          terrain[y][x] = TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX
         } else if (value < 0.3) {
-          terrain[y][x] = TILE_VARIANTS.TERRAIN.dirt.id
+          terrain[y][x] = TILE_VARIANTS.GROUND_LAYER.DIRT.TILE_MAP_INDEX
         } else {
-          terrain[y][x] = TILE_VARIANTS.TERRAIN.mountain.id
+          terrain[y][x] = TILE_VARIANTS.GROUND_LAYER.MOUNTAIN.TILE_MAP_INDEX
         }
       }
     }
@@ -100,25 +39,28 @@ export class TerrainController {
 
     for (let y = 1; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        if (terrain[y][x] === TILE_VARIANTS.TERRAIN.grass.id && Math.random() < treeDensity) {
+        if (
+          terrain[y][x] === TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX &&
+          Math.random() < treeDensity
+        ) {
           // Check if there's room for the tree (trunk on this tile and treetop on the tile above)
           if (
             y > 0 &&
-            terrain[y - 1][x] === TILE_VARIANTS.TERRAIN.grass.id &&
+            terrain[y - 1][x] === TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX &&
             !this.isResourceNearby(resourcePositions, x, y)
           ) {
             let num = Math.random()
             if (num < 0.1) {
-              terrain[y][x] = TILE_VARIANTS.RESOURCES.long_grass_one.id
+              terrain[y][x] = TILE_VARIANTS.RESOURCE_LAYER.LONG_GRASS_ONE.TILE_MAP_INDEX
             } else if (num < 0.2 && num > 0.1) {
-              terrain[y][x] = TILE_VARIANTS.RESOURCES.long_grass_two.id
+              terrain[y][x] = TILE_VARIANTS.RESOURCE_LAYER.LONG_GRASS_TWO.TILE_MAP_INDEX
             } else if (num < 0.3 && num > 0.2) {
-              terrain[y][x] = TILE_VARIANTS.RESOURCES.berries.id
+              terrain[y][x] = TILE_VARIANTS.RESOURCE_LAYER.BERRIES.TILE_MAP_INDEX
             } else if (num < 0.4 && num > 0.3) {
-              terrain[y][x] = TILE_VARIANTS.RESOURCES.mushroom.id
+              terrain[y][x] = TILE_VARIANTS.RESOURCE_LAYER.MUSHROOM.TILE_MAP_INDEX
             } else {
-              terrain[y - 1][x] = TILE_VARIANTS.RESOURCES.tree_top.id
-              terrain[y][x] = TILE_VARIANTS.RESOURCES.tree_trunk.id
+              terrain[y - 1][x] = TILE_VARIANTS.RESOURCE_LAYER.TREE_TOP.TILE_MAP_INDEX
+              terrain[y][x] = TILE_VARIANTS.RESOURCE_LAYER.TREE_TRUNK.TILE_MAP_INDEX
             }
             resourcePositions.push({ x, y })
           }
@@ -128,18 +70,21 @@ export class TerrainController {
     return terrain
   }
 
-  addDecoration(terrain: Terrain): Terrain {
+  addDecorationToTerrain(terrain: Terrain): Terrain {
     const width = terrain[0].length
     const height = terrain.length
 
     for (let y = 1; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        if (terrain[y][x] === TILE_VARIANTS.TERRAIN.grass.id && Math.random() < 0.2) {
+        if (
+          terrain[y][x] === TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX &&
+          Math.random() < 0.2
+        ) {
           let num = Math.random()
           if (num < 0.05) {
-            terrain[y][x] = TILE_VARIANTS.DECORATION.tree_stump.id
+            terrain[y][x] = TILE_VARIANTS.DECORATION_LAYER.TREE_STUMP.TILE_MAP_INDEX
           } else if (num < 0.1 && num > 0.05) {
-            terrain[y][x] = TILE_VARIANTS.DECORATION.flowers.id
+            terrain[y][x] = TILE_VARIANTS.DECORATION_LAYER.FLOWERS.TILE_MAP_INDEX
           }
         }
       }
@@ -196,11 +141,14 @@ export class TerrainController {
 
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        if (terrain[y][x] === TILE_VARIANTS.TERRAIN.WATER.water.id && !visited[y][x]) {
+        if (
+          terrain[y][x] === TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CENTER.TILE_MAP_INDEX &&
+          !visited[y][x]
+        ) {
           const waterBody = this.floodFill(terrain, x, y, visited)
           if (waterBody.length < minSize) {
             waterBody.forEach(([wx, wy]) => {
-              terrain[wy][wx] = TILE_VARIANTS.TERRAIN.grass.id
+              terrain[wy][wx] = TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX
             })
           }
         }
@@ -225,7 +173,7 @@ export class TerrainController {
         y < 0 ||
         y >= height ||
         visited[y][x] ||
-        terrain[y][x] !== TILE_VARIANTS.TERRAIN.WATER.water.id
+        terrain[y][x] !== TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CENTER.TILE_MAP_INDEX
       ) {
         continue
       }
@@ -242,7 +190,7 @@ export class TerrainController {
   applyWaterEdges(terrain: Terrain): Terrain {
     for (let y = 0; y < terrain.length; y++) {
       for (let x = 0; x < terrain[y].length; x++) {
-        if (terrain[y][x] === TILE_VARIANTS.TERRAIN.WATER.water.id) {
+        if (terrain[y][x] === TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CENTER.TILE_MAP_INDEX) {
           terrain[y][x] = this.getWaterEdgeTile(terrain, x, y)
         }
       }
@@ -260,15 +208,15 @@ export class TerrainController {
 
   getWaterEdgeTile(terrain: Terrain, x: number, y: number): number {
     const waterTiles = [
-      TILE_VARIANTS.TERRAIN.WATER.water.id,
-      TILE_VARIANTS.TERRAIN.WATER.water_edge_top.id,
-      TILE_VARIANTS.TERRAIN.WATER.water_edge_bottom.id,
-      TILE_VARIANTS.TERRAIN.WATER.water_edge_left.id,
-      TILE_VARIANTS.TERRAIN.WATER.water_edge_right.id,
-      TILE_VARIANTS.TERRAIN.WATER.water_corner_topleft.id,
-      TILE_VARIANTS.TERRAIN.WATER.water_corner_topright.id,
-      TILE_VARIANTS.TERRAIN.WATER.water_corner_bottomleft.id,
-      TILE_VARIANTS.TERRAIN.WATER.water_corner_bottomright.id
+      TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CENTER.TILE_MAP_INDEX,
+      TILE_VARIANTS.GROUND_LAYER.WATER.WATER_EDGE_TOP.TILE_MAP_INDEX,
+      TILE_VARIANTS.GROUND_LAYER.WATER.WATER_EDGE_BOTTOM.TILE_MAP_INDEX,
+      TILE_VARIANTS.GROUND_LAYER.WATER.WATER_EDGE_LEFT.TILE_MAP_INDEX,
+      TILE_VARIANTS.GROUND_LAYER.WATER.WATER_EDGE_RIGHT.TILE_MAP_INDEX,
+      TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CORNER_TOP_LEFT.TILE_MAP_INDEX,
+      TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CORNER_TOP_RIGHT.TILE_MAP_INDEX,
+      TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CORNER_BOTTOM_LEFT.TILE_MAP_INDEX,
+      TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CORNER_BOTTOM_RIGHT.TILE_MAP_INDEX
     ]
 
     const isWater = (x: number, y: number) => {
@@ -287,32 +235,32 @@ export class TerrainController {
     const bottomRight = isWater(x + 1, y + 1)
 
     if (!top && left && right) {
-      return TILE_VARIANTS.TERRAIN.WATER.water_edge_top.id
+      return TILE_VARIANTS.GROUND_LAYER.WATER.WATER_EDGE_TOP.TILE_MAP_INDEX
     }
     if (!bottom && left && right) {
-      return TILE_VARIANTS.TERRAIN.WATER.water_edge_bottom.id
+      return TILE_VARIANTS.GROUND_LAYER.WATER.WATER_EDGE_BOTTOM.TILE_MAP_INDEX
     }
     if (!left && top && bottom) {
-      return TILE_VARIANTS.TERRAIN.WATER.water_edge_left.id
+      return TILE_VARIANTS.GROUND_LAYER.WATER.WATER_EDGE_LEFT.TILE_MAP_INDEX
     }
     if (!right && top && bottom) {
-      return TILE_VARIANTS.TERRAIN.WATER.water_edge_right.id
+      return TILE_VARIANTS.GROUND_LAYER.WATER.WATER_EDGE_RIGHT.TILE_MAP_INDEX
     }
 
     // Then handle corners
     if (!top && !left && !topLeft) {
-      return TILE_VARIANTS.TERRAIN.WATER.water_corner_topleft.id
+      return TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CORNER_TOP_LEFT.TILE_MAP_INDEX
     }
     if (!top && !right && !topRight) {
-      return TILE_VARIANTS.TERRAIN.WATER.water_corner_topright.id
+      return TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CORNER_TOP_RIGHT.TILE_MAP_INDEX
     }
     if (!bottom && !left && !bottomLeft) {
-      return TILE_VARIANTS.TERRAIN.WATER.water_corner_bottomleft.id
+      return TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CORNER_BOTTOM_LEFT.TILE_MAP_INDEX
     }
     if (!bottom && !right && !bottomRight) {
-      return TILE_VARIANTS.TERRAIN.WATER.water_corner_bottomright.id
+      return TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CORNER_BOTTOM_RIGHT.TILE_MAP_INDEX
     }
 
-    return TILE_VARIANTS.TERRAIN.WATER.water.id
+    return TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CENTER.TILE_MAP_INDEX
   }
 }

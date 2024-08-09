@@ -2,7 +2,7 @@ import { uniqueNamesGenerator, names } from 'unique-names-generator'
 
 export const isTileIdInObject = (tileId: number, obj: any): boolean => {
   for (const key in obj) {
-    if (obj[key].id === tileId) {
+    if (obj[key].TILE_MAP_INDEX === tileId) {
       return true
     }
     if (obj[key] && typeof obj[key] === 'object') {

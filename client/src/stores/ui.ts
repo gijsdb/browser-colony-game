@@ -1,8 +1,6 @@
 import { defineStore } from 'pinia'
 import GameController from '@/game/controllers/GameController'
 
-// used by vue
-
 type UIState = {
   ui: {
     gameController: GameController | null
@@ -26,9 +24,7 @@ export const useUIStore = defineStore('UIStore', {
       this.ui.gameRunning = true
     },
     storeEndGame() {
-      if (this.ui.gameController) {
-        this.ui.gameController.endGame()
-      }
+      this.ui.gameController!.endGame()
 
       this.ui.gameRunning = false
       this.ui.gameController = null

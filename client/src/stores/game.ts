@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ToRefs } from 'vue'
 import Resource from '@/game/entities/resources/resource'
 import Colonist from '@/game/entities/colonist'
-import { Terrain } from '@/game/controllers/TerrainController'
+import { Terrain } from '@/game/mapgen/TerrainGenerator'
 
 export type GameStoreType = ReturnType<typeof useGameStore>
 export type GameStoreRefsType = ToRefs<GameState>
@@ -41,7 +41,7 @@ export const useGameStore = defineStore('GameStore', {
   },
   getters: {},
   actions: {
-    storeSetMap(map: Phaser.Tilemaps.Tilemap) {
+    storeSetMap(map: Phaser.Tilemaps.Tilemap | undefined) {
       if (!this.game.map.tileMap) {
         this.game.map.tileMap = map
       }
@@ -52,7 +52,25 @@ export const useGameStore = defineStore('GameStore', {
     storeSetCurrentScene(scene: Phaser.Scene) {
       this.game.currentScene = scene
     },
-    storeSetResources() {},
-    storeSetColonists() {}
+    storeAddResource(resource: Resource) {
+      this.game.resources.push(resource)
+    },
+    storeAddColonist(colonist: Colonist) {
+      this.game.colonists.push(colonist)
+    },
+    storeReset() {
+      this.game = {
+        resources: [],
+        colonists: [],
+        map: {
+          tileMap: undefined,
+          tileSize: 32,
+          terrainLayout: [],
+          mapWidthTiles: 100,
+          mapHeightTiles: 100
+        },
+        currentScene: undefined
+      }
+    }
   }
 })
