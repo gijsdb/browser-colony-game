@@ -1,35 +1,58 @@
 import { defineStore } from 'pinia'
-import GameController from '@/game/controllers/GameController'
+import { ToRefs } from 'vue'
+import Resource from '@/game/entities/resources/resource'
+import Colonist from '@/game/entities/colonist'
+import { Terrain } from '@/game/controllers/TerrainController'
 
-type State = {
+export type GameStoreType = ReturnType<typeof useGameStore>
+export type GameStoreRefsType = ToRefs<GameState>
+
+export type GameState = {
   game: {
-    controller: GameController | null
-    running: boolean
+    resources: Resource[]
+    colonists: Colonist[]
+    map: {
+      tileMap: Phaser.Tilemaps.Tilemap | undefined
+      tileSize: number
+      mapWidthTiles: number
+      mapHeightTiles: number
+      terrainLayout: Terrain
+    }
+    currentScene: Phaser.Scene | undefined
   }
 }
 
 export const useGameStore = defineStore('GameStore', {
-  state: (): State => {
+  state: (): GameState => {
     return {
       game: {
-        controller: null,
-        running: false
+        resources: [],
+        colonists: [],
+        map: {
+          tileMap: undefined,
+          tileSize: 32,
+          terrainLayout: [],
+          mapWidthTiles: 100,
+          mapHeightTiles: 100
+        },
+        currentScene: undefined
       }
     }
   },
   getters: {},
   actions: {
-    storeStartGame(colonistAmount: number) {
-      this.game.controller = new GameController(colonistAmount)
-      this.game.running = true
-    },
-    storeEndGame() {
-      if (this.game.controller) {
-        this.game.controller.endGame()
+    storeSetMap(map: Phaser.Tilemaps.Tilemap) {
+      if (!this.game.map.tileMap) {
+        this.game.map.tileMap = map
       }
-
-      this.game.running = false
-      this.game.controller = null
-    }
+    },
+    storeSetTerrainLayout(terrain: Terrain) {
+      this.game.map.terrainLayout = terrain
+    },
+    storeSetCurrentScene(scene: Phaser.Scene) {
+      this.game.currentScene = scene
+    },
+    storeSetResources() {},
+    storeSetColonists() {}
   }
 })

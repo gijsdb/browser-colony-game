@@ -1,41 +1,22 @@
 import Phaser from 'phaser'
 import tiles from '@/assets/tilesets/forest_tiles_fixed.png'
-import { Terrain, TerrainController, TILE_VARIANTS } from '@/game/controllers/TerrainController'
+import { Terrain, TILE_VARIANTS } from '@/game/controllers/TerrainController'
 import EntityController from '@/game/controllers/EntityController'
-import UIController from '@/game/controllers/UIController'
 import CameraController from '@/game/controllers/CameraController'
 import { isTileIdInObject } from '@/game/util'
-
-type Layers = {
-  ground_layer: Phaser.Tilemaps.TilemapLayer | null
-  resource_layer: Phaser.Tilemaps.TilemapLayer | null
-  decoration_layer: Phaser.Tilemaps.TilemapLayer | null
-}
+import { GameStoreType, GameStoreRefsType, useGameStore } from '@/stores/game'
+import { storeToRefs } from 'pinia'
 
 class MapScene extends Phaser.Scene {
-  public layers: Layers
-  public tileSize: number
-  public mapWidth: number
-  public mapHeight: number
   private entityController?: EntityController
   private cameraController?: CameraController
-  private terrainController?: TerrainController
-  private uiController?: UIController
-  private terrain: Terrain
-  private map: Phaser.Tilemaps.Tilemap | undefined
+  private store: GameStoreType
+  private storeRefs: GameStoreRefsType
 
   constructor() {
     super({ key: 'MapScene' })
-
-    this.layers = {
-      ground_layer: null,
-      resource_layer: null,
-      decoration_layer: null
-    }
-    this.tileSize = 32
-    this.mapWidth = 100
-    this.mapHeight = 100
-    this.terrain = []
+    this.store = useGameStore()
+    this.storeRefs = storeToRefs(this.store)
   }
 
   preload() {
@@ -46,66 +27,86 @@ class MapScene extends Phaser.Scene {
     let data = this.sys.getData()
 
     this.entityController = data.entityController
-    this.terrainController = data.terrainController
-    this.uiController = data.uiController
     this.cameraController = data.cameraController
 
-    if (
-      !this.terrainController ||
-      !this.entityController ||
-      !this.uiController ||
-      !this.cameraController
-    ) {
+    if (!this.entityController || !this.cameraController) {
       throw Error('no controllers provided to scene')
     }
   }
 
   create() {
+    const { storeSetMap } = this.store
     this.initControllers()
 
-    this.map = this.make.tilemap({
-      tileWidth: this.tileSize,
-      tileHeight: this.tileSize,
-      width: this.mapWidth,
-      height: this.mapHeight
+    let map = this.make.tilemap({
+      tileHeight: this.storeRefs.game.value.map.tileSize,
+      width: this.storeRefs.game.value.map.mapWidthTiles,
+      height: this.storeRefs.game.value.map.mapHeightTiles
     })
-    const tileset = this.map.addTilesetImage('tileset-name', 'tiles', 32, 32, 1, 2)
+
+    const tileset = map.addTilesetImage(
+      'tileset-name',
+      'tiles',
+      this.storeRefs.game.value.map.tileSize,
+      this.storeRefs.game.value.map.tileSize,
+      1,
+      2
+    )
     if (!tileset) {
       throw Error('failed to load tileset')
     }
-    this.layers.ground_layer = this.map.createBlankLayer('Ground', tileset)
-    this.layers.resource_layer = this.map.createBlankLayer('Resource', tileset)
-    this.layers.decoration_layer = this.map.createBlankLayer('Decoration', tileset)
-    if (!this.layers.ground_layer || !this.layers.resource_layer || !this.layers.decoration_layer) {
+
+    let layers = {
+      ground_layer: map.createBlankLayer('Ground', tileset),
+      resource_layer: map.createBlankLayer('Resource', tileset),
+      decoration_layer: map.createBlankLayer('Decoration', tileset)
+    }
+    if (!layers.ground_layer || !layers.resource_layer || !layers.decoration_layer) {
       throw Error('failed to create layers')
     }
 
-    this.terrain = this.terrainController!.generateTerrainPerlinNoise(this.mapWidth, this.mapHeight)
-    this.terrain = this.terrainController!.addResourcesToTerrain(this.terrain)
-    this.terrain = this.terrainController!.addDecoration(this.terrain)
+    storeSetMap(map)
 
-    this.renderMap(this.map, this.terrain)
+    this.renderMap()
 
-    this.entityController!.createAnimations()
-    this.entityController!.addButterflies()
-    this.entityController!.addColonists()
-    this.entityController!.initResources(this.terrain)
-
-    this.uiController!.setUpInputHandlers(this.map, this.terrain)
+    // this.entityController!.createAnimations()
+    // this.entityController!.addButterflies()
+    // this.entityController!.addColonists()
+    // this.entityController!.initResources(this.storeRefs.game.value.map.terrainLayout!)
   }
 
-  renderMap(map: Phaser.Tilemaps.Tilemap, terrain: Terrain) {
-    for (let y = 0; y < this.mapHeight; y++) {
-      for (let x = 0; x < this.mapWidth; x++) {
-        const tileId = terrain[y][x]
+  renderMap() {
+    for (let y = 0; y < this.storeRefs.game.value.map.mapHeightTiles; y++) {
+      for (let x = 0; x < this.storeRefs.game.value.map.mapWidthTiles; x++) {
+        const tileId = this.storeRefs.game.value.map.terrainLayout![y][x]
+
+        let ground_layer = this.storeRefs.game.value.map.tileMap?.getLayer('Ground')
+        let resource_layer = this.storeRefs.game.value.map.tileMap?.getLayer('Resource')
+        let decoration_layer = this.storeRefs.game.value.map.tileMap?.getLayer('Decoration')
+
+        if (!ground_layer || !resource_layer || !decoration_layer) {
+          throw Error('Could not render map')
+        }
         if (isTileIdInObject(tileId, TILE_VARIANTS.TERRAIN)) {
-          map.putTileAt(tileId, x, y, false, this.layers.ground_layer!)
+          this.storeRefs.game.value.map.tileMap!.putTileAt(tileId, x, y, false, 'Ground')
         } else if (isTileIdInObject(tileId, TILE_VARIANTS.RESOURCES)) {
-          this.layers.ground_layer?.putTileAt(TILE_VARIANTS.TERRAIN.grass.id, x, y)
-          map.putTileAt(tileId, x, y, false, this.layers.resource_layer!)
+          this.storeRefs.game.value.map.tileMap!.putTileAt(
+            TILE_VARIANTS.TERRAIN.grass.id,
+            x,
+            y,
+            false,
+            'Ground'
+          )
+          this.storeRefs.game.value.map.tileMap!.putTileAt(tileId, x, y, false, 'Resource')
         } else if (isTileIdInObject(tileId, TILE_VARIANTS.DECORATION)) {
-          this.layers.ground_layer?.putTileAt(TILE_VARIANTS.TERRAIN.grass.id, x, y)
-          map.putTileAt(tileId, x, y, false, this.layers.decoration_layer!)
+          this.storeRefs.game.value.map.tileMap!.putTileAt(
+            TILE_VARIANTS.TERRAIN.grass.id,
+            x,
+            y,
+            false,
+            'Ground'
+          )
+          this.storeRefs.game.value.map.tileMap!.putTileAt(tileId, x, y, false, 'Decoration')
         }
       }
     }
@@ -113,7 +114,6 @@ class MapScene extends Phaser.Scene {
 
   update() {
     this.cameraController!.update()
-    this.entityController!.update()
   }
 }
 

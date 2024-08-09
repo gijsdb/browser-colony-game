@@ -7,13 +7,17 @@ import MapScene from '../scenes/MapScene'
 import Resource from '../entities/resources/resource'
 import Mushroom from '../entities/resources/mushroom'
 import Tree from '../entities/resources/tree'
+import { GameStoreRefsType, GameStoreType, useGameStore } from '@/stores/game'
+import { storeToRefs } from 'pinia'
 
 export default class EntityController {
-  private scene: MapScene | null
+  private scene: Phaser.Scene | null
   private colonistAmount: number
   private colonists: Array<Colonist>
   private resources: Array<Resource>
   private butterflies: Phaser.GameObjects.Group | undefined
+  private store: GameStoreType
+  private storeRefs: GameStoreRefsType
 
   constructor(colonistAmount: number) {
     this.scene = null
@@ -21,10 +25,12 @@ export default class EntityController {
     this.resources = []
     this.butterflies = undefined
     this.colonistAmount = colonistAmount
+    this.store = useGameStore()
+    this.storeRefs = storeToRefs(this.store)
   }
 
-  setScene(scene: MapScene): void {
-    this.scene = scene as MapScene
+  setScene(scene: Phaser.Scene): void {
+    this.scene = scene
     this.preload()
   }
 
@@ -44,29 +50,25 @@ export default class EntityController {
     })
   }
 
-  update() {}
-
-  addColonists() {
-    const centerX = Math.floor(this.scene!.mapWidth / 2)
-    const centerY = Math.floor(this.scene!.mapHeight / 2)
-    const spawnRadius = 10
-    for (let i = 0; i < this.colonistAmount; i++) {
-      let x, y
-      do {
-        x = Phaser.Math.Between(centerX - spawnRadius, centerX + spawnRadius)
-        y = Phaser.Math.Between(centerY - spawnRadius, centerY + spawnRadius)
-        if (
-          this.scene!.layers.ground_layer?.getTileAt(x, y).index != TILE_VARIANTS.TERRAIN.grass.id
-        ) {
-          x = null
-          y = null
-        }
-      } while (x == null && y == null)
-
-      const colonist = new Colonist(this.scene!, x || 0, y || 0)
-      this.colonists.push(colonist)
-    }
-  }
+  // addColonists() {
+  //   const centerX = Math.floor(this.store.game.map.mapWidthTiles / 2)
+  //   const centerY = Math.floor(this.store.game.map.mapHeightTiles / 2)
+  //   const spawnRadius = 10
+  //   for (let i = 0; i < this.colonistAmount; i++) {
+  //     let x, y
+  //     do {
+  //       x = Phaser.Math.Between(centerX - spawnRadius, centerX + spawnRadius)
+  //       y = Phaser.Math.Between(centerY - spawnRadius, centerY + spawnRadius)
+  //       let tile = this.storeRefs.game.value.map.tileMap?.getTileAt(x, y, false, 'Ground')
+  //       if (tile!.index != TILE_VARIANTS.TERRAIN.grass.id) {
+  //         x = null
+  //         y = null
+  //       }
+  //     } while (x == null && y == null)
+  //     const colonist = new Colonist(this.scene!, x || 0, y || 0)
+  //     this.colonists.push(colonist)
+  //   }
+  // }
 
   // not ideal, loop already happens in TerrainGenerator
   initResources(terrain: Terrain) {
@@ -83,7 +85,6 @@ export default class EntityController {
         }
       }
     }
-    console.log(this.resources)
   }
 
   // butterflies arent an entity just deco needs to move
@@ -91,8 +92,14 @@ export default class EntityController {
     this.butterflies = this.scene!.add.group()
     for (let i = 0; i < 10; i++) {
       // Adjust the number of butterflies
-      const x = Phaser.Math.Between(0, this.scene!.mapWidth * this.scene!.tileSize)
-      const y = Phaser.Math.Between(0, this.scene!.mapHeight * this.scene!.tileSize)
+      const x = Phaser.Math.Between(
+        0,
+        this.store.game.map.mapWidthTiles * this.store.game.map.tileSize
+      )
+      const y = Phaser.Math.Between(
+        0,
+        this.store.game.map.mapHeightTiles * this.store.game.map.mapWidthTiles
+      )
 
       const butterfly = this.butterflies.create(x, y, 'butterfly').play('fly')
       this.addButterflyMovement(butterfly)
@@ -105,11 +112,13 @@ export default class EntityController {
     this.scene!.tweens.add({
       targets: butterfly,
       x: {
-        value: () => Phaser.Math.Between(0, this.scene!.mapWidth * this.scene!.tileSize),
+        value: () =>
+          Phaser.Math.Between(0, this.store.game.map.mapWidthTiles * this.store.game.map.tileSize),
         duration: duration
       },
       y: {
-        value: () => Phaser.Math.Between(0, this.scene!.mapHeight * this.scene!.tileSize),
+        value: () =>
+          Phaser.Math.Between(0, this.store.game.map.mapHeightTiles * this.store.game.map.tileSize),
         duration: duration
       },
       onComplete: () => {

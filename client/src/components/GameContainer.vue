@@ -6,18 +6,18 @@
     >
       Exit
     </button>
-    <GameUI v-show="gameStoreRef.game.value.running"></GameUI>
+    <GameUI v-show="uiStoreRef.ui.value.gameRunning"></GameUI>
   </div>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useGameStore } from '@/stores/game'
+import { useUIStore } from '@/stores/ui'
 import GameUI from '@/components/GameUI.vue'
 
-const gameStore = useGameStore()
-let gameStoreRef = storeToRefs(gameStore)
-const { storeEndGame } = gameStore
+const uiStore = useUIStore()
+let uiStoreRef = storeToRefs(uiStore)
+const { storeEndGame } = uiStore
 
 const handleExitGame = () => {
   storeEndGame()
