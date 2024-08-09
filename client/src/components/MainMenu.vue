@@ -14,10 +14,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useGameStore } from '@/stores/game.js'
+import { useUIStore } from '@/stores/ui'
 
-const gameStore = useGameStore()
-const { storeStartGame } = gameStore
+const uiStore = useUIStore()
+const { storeStartGame } = uiStore
 
 let creatingNewGame = ref(false)
 let colonistAmount = ref(5)

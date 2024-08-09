@@ -1,25 +1,27 @@
 import Phaser from 'phaser'
 import MapScene from '../scenes/MapScene'
-import EntityController from './EntityController'
-import { TerrainController } from './TerrainController'
+import { TerrainGenerator } from '../mapgen/TerrainGenerator'
 import UIController from './UIController'
-import CameraController from './CameraController'
-import OrderController from './OrderController'
+import { GameStoreType, useGameStore } from '@/stores/game'
+import { storeToRefs } from 'pinia'
+import { ColonistService, ColonistServiceI } from '@/game/services/colonist'
+import { ResourceServiceI, ResourceService } from '@/game/services/resource'
 
 export default class GameController {
   private game: Phaser.Game | null
-  private entityController: EntityController
-  private terrainController: TerrainController
-  private uiController: UIController
-  private cameraController: CameraController
-  private orderController: OrderController
+  private terrainGenerator: TerrainGenerator
+  private store: GameStoreType
+  private colonistService: ColonistServiceI
+  private resourceService: ResourceServiceI
+  private uiController?: UIController
 
   constructor(colonistAmount: number) {
-    this.orderController = new OrderController()
-    this.entityController = new EntityController(colonistAmount)
-    this.terrainController = new TerrainController()
-    this.uiController = new UIController(this.orderController)
-    this.cameraController = new CameraController()
+    this.store = useGameStore()
+    const { storeSetTerrainLayout, storeSetCurrentScene } = this.store
+
+    this.terrainGenerator = new TerrainGenerator()
+    this.colonistService = new ColonistService(colonistAmount)
+    this.resourceService = new ResourceService()
 
     const config = {
       type: Phaser.AUTO,
@@ -35,15 +37,23 @@ export default class GameController {
       callbacks: {
         preBoot: (game: Phaser.Game) => {
           game.scene.add('MapScene', MapScene, true, {
-            entityController: this.entityController,
-            terrainController: this.terrainController,
-            uiController: this.uiController,
-            cameraController: this.cameraController
+            colonistService: this.colonistService,
+            resourceService: this.resourceService
           })
+
+          let terrain = this.terrainGenerator.generateTerrainPerlinNoise(
+            this.store.game.map.mapWidthTiles,
+            this.store.game.map.mapHeightTiles
+          )
+          terrain = this.terrainGenerator.addResourcesToTerrain(terrain)
+          terrain = this.terrainGenerator.addDecorationToTerrain(terrain)
+          storeSetTerrainLayout(terrain)
         },
         postBoot: (game: Phaser.Game) => {
-          const scene = game.scene.getScene('MapScene') as MapScene
-          this.provideSceneToControllers(scene)
+          const scene = game.scene.getScene('MapScene')
+          storeSetCurrentScene(scene)
+          this.uiController = new UIController()
+          this.uiController.setUpInputHandlers()
         }
       }
     }
@@ -51,15 +61,11 @@ export default class GameController {
     this.game = new Phaser.Game(config)
   }
 
-  private provideSceneToControllers(scene: MapScene): void {
-    this.entityController.setScene(scene)
-    this.uiController.setScene(scene)
-    this.cameraController.setScene(scene)
-    // Set the scene for other controllers here
-  }
+  public endGame(): void {
+    const { storeReset } = this.store
 
-  endGame(): void {
-    this.game?.destroy(true)
+    this.game!.destroy(true)
     this.game = null
+    storeReset()
   }
 }

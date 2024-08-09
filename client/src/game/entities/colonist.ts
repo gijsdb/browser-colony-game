@@ -1,4 +1,4 @@
-import MapScene from '../scenes/MapScene'
+import { GameStoreType, useGameStore } from '@/stores/game'
 import { generateColonistName } from '../util'
 
 type ColonistBody = {
@@ -11,19 +11,22 @@ type ColonistBody = {
 }
 
 export default class Colonist {
-  private scene: MapScene
+  private scene: Phaser.Scene
   private x: number
   private y: number
   private name: string
   private body: ColonistBody
   private nameTag: Phaser.GameObjects.Text
   private container: Phaser.GameObjects.Container
+  private store: GameStoreType
 
-  constructor(scene: MapScene, x: number, y: number) {
+  constructor(scene: Phaser.Scene, x: number, y: number) {
+    this.store = useGameStore()
+    this.name = generateColonistName()
     this.scene = scene
     this.x = x
     this.y = y
-    this.name = generateColonistName()
+
     this.body = {
       headTopLeft: this.scene.add.sprite(0, 0, 'colonist', 0),
       headTopRight: this.scene.add.sprite(16, 0, 'colonist', 1),
@@ -39,8 +42,8 @@ export default class Colonist {
     })
 
     this.container = this.scene.add.container(
-      this.x * this.scene.tileSize,
-      this.y * this.scene.tileSize,
+      this.x * this.store.game.map.tileSize,
+      this.y * this.store.game.map.tileSize,
       [
         this.body.headTopLeft,
         this.body.headTopRight,

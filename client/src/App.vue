@@ -1,6 +1,6 @@
 <template>
   <div>
-    <MainMenu v-if="!gameStoreRef.game.value.running" />
+    <MainMenu v-if="!uiStoreRef.ui.value.gameRunning" />
     <GameContainer v-else />
   </div>
 </template>
@@ -9,8 +9,8 @@
 import GameContainer from './components/GameContainer.vue'
 import MainMenu from './components/MainMenu.vue'
 import { storeToRefs } from 'pinia'
-import { useGameStore } from './stores/game'
+import { useUIStore } from './stores/ui'
 
-const gameStore = useGameStore()
-let gameStoreRef = storeToRefs(gameStore)
+const uiStore = useUIStore()
+let uiStoreRef = storeToRefs(uiStore)
 </script>
