@@ -2,22 +2,34 @@ import { GameStoreRefsType, GameStoreType, useGameStore } from '@/stores/game'
 import { TILE_VARIANTS } from '../mapgen/TileVariants'
 import Colonist from '../entities/colonist'
 import { storeToRefs } from 'pinia'
+import { eventBus } from '@/eventBus'
+import Resource from '../entities/resources/resource'
+
+type Job = {
+  location: number[] //x,y
+  inProgress: boolean
+}
 
 export interface ColonistServiceI {
   initialColonistAmount: number
   spawnColonist(amount: number): void
   createAnimations(): void
+  destroy(): void
 }
 
 export class ColonistService implements ColonistServiceI {
   private store: GameStoreType
   private storeRefs: GameStoreRefsType
   public initialColonistAmount: number
+  private jobs: Job[]
+  private jobsInterval: NodeJS.Timeout | null
 
   constructor(initialColonistAmount: number) {
     this.initialColonistAmount = initialColonistAmount
     this.store = useGameStore()
     this.storeRefs = storeToRefs(this.store)
+    this.jobs = []
+    this.jobsInterval = null
   }
 
   spawnColonist(amount: number): void {
@@ -41,6 +53,70 @@ export class ColonistService implements ColonistServiceI {
       const colonist = new Colonist(this.storeRefs.game.value.currentScene!, x || 0, y || 0)
       storeAddColonist(colonist)
     }
+
+    this.listenForOrders()
+    this.startJobProcessing()
+  }
+
+  listenForOrders() {
+    eventBus.value.on('resource-marked-for-harvest', (data) => {
+      const resourcePos = (data as { resourcePos: number[] }).resourcePos
+      this.jobs.push({ location: resourcePos, inProgress: false })
+    })
+  }
+
+  startJobProcessing() {
+    this.jobsInterval = setInterval(() => {
+      if (this.jobs.length > 0) {
+        this.jobs.forEach((job) => {
+          if (!job.inProgress) {
+            this.performJob(job)
+            job.inProgress = true
+            return
+          }
+        })
+      }
+    }, 1500)
+  }
+
+  performJob(job: Job) {
+    job.inProgress = true
+    const colonist = this.getClosestColonist(job.location)
+    if (!colonist) {
+      job.inProgress = false
+      console.log('No colonist available for the job')
+      return
+    }
+    colonist.moveColonistTo(job.location, () => {
+      // simulate job
+      setTimeout(() => {
+        console.log('Job completed')
+        this.jobs[0].inProgress
+        this.jobs.shift()
+        colonist.occupied = false
+      }, 2000) // Time taken to complete the job
+    })
+  }
+
+  getClosestColonist(location: number[]): Colonist | null {
+    let closestColonist: Colonist | null = null
+    let shortestDistance = Infinity
+
+    for (const colonist of this.storeRefs.game.value.colonists) {
+      const distance = Phaser.Math.Distance.Between(
+        colonist.x,
+        colonist.y,
+        location[0],
+        location[1]
+      )
+
+      if (distance < shortestDistance && !colonist.occupied) {
+        shortestDistance = distance
+        closestColonist = colonist
+      }
+    }
+
+    return closestColonist
   }
 
   createAnimations(): void {
@@ -92,5 +168,9 @@ export class ColonistService implements ColonistServiceI {
       frameRate: 10,
       repeat: -1
     })
+  }
+
+  destroy(): void {
+    clearInterval(this.jobsInterval!)
   }
 }

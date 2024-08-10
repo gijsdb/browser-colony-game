@@ -3,7 +3,6 @@ import MapScene from '../scenes/MapScene'
 import { TerrainGenerator } from '../mapgen/TerrainGenerator'
 import UIController from './UIController'
 import { GameStoreType, useGameStore } from '@/stores/game'
-import { storeToRefs } from 'pinia'
 import { ColonistService, ColonistServiceI } from '@/game/services/colonist'
 import { ResourceServiceI, ResourceService } from '@/game/services/resource'
 
@@ -66,6 +65,7 @@ export default class GameController {
 
     this.game!.destroy(true)
     this.game = null
+    this.colonistService.destroy()
     storeReset()
   }
 }

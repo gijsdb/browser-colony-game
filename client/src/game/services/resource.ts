@@ -3,6 +3,7 @@ import { TILE_VARIANTS } from '../mapgen/TileVariants'
 import { storeToRefs } from 'pinia'
 import Mushroom from '../entities/resources/mushroom'
 import Tree from '../entities/resources/tree'
+import Resource from '../entities/resources/resource'
 
 export interface ResourceServiceI {
   spawnResources(): void
@@ -37,4 +38,6 @@ export class ResourceService implements ResourceServiceI {
       }
     }
   }
+
+  markResourceForHarvest(resource: Resource) {}
 }

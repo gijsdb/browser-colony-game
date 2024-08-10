@@ -58,6 +58,18 @@ export const useGameStore = defineStore('GameStore', {
     storeAddColonist(colonist: Colonist) {
       this.game.colonists.push(colonist)
     },
+    storeSetResourceToHarvest(tileX: number, tileY: number): number[] | null {
+      for (const resource of this.game.resources) {
+        if (resource.x === tileX && resource.y === tileY) {
+          if (!resource.harvest) {
+            resource.harvest = true
+            return [tileX, tileY]
+          }
+          break
+        }
+      }
+      return null
+    },
     storeReset() {
       this.game = {
         resources: [],
