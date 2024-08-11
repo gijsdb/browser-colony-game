@@ -99,8 +99,10 @@ export default class UIController {
           tileClicked === TILE_VARIANTS.RESOURCE_LAYER.TREE_TOP.TILE_MAP_INDEX ||
           tileClicked === TILE_VARIANTS.RESOURCE_LAYER.TREE_TRUNK.TILE_MAP_INDEX
         ) {
-          let resourcePos = storeSetResourceToHarvest(tileX, tileY)
-          eventBus.value.emit('resource-marked-for-harvest', { resourcePos: resourcePos })
+          let gameStoreJob = storeSetResourceToHarvest(tileX, tileY)
+          if (gameStoreJob) {
+            eventBus.value.emit('resource-marked-for-harvest', gameStoreJob)
+          }
         }
       default:
         console.log(`Clicked on tile: x=${tileX}, y=${tileY}`)

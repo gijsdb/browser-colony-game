@@ -1,14 +1,17 @@
-import { GameStoreRefsType, GameStoreType, useGameStore } from '@/stores/game'
+import { GameStoreJob, GameStoreRefsType, GameStoreType, useGameStore } from '@/stores/game'
 import { TILE_VARIANTS } from '../mapgen/TileVariants'
-import Colonist from '../entities/colonist'
+import Colonist from '../entities/Colonist'
 import { storeToRefs } from 'pinia'
 import { eventBus } from '@/eventBus'
-import Resource from '../entities/resources/resource'
 
 type Job = {
   location: number[] //x,y
   inProgress: boolean
+  type: JobType
+  resourceId?: number
 }
+
+type JobType = 'harvest' | 'build'
 
 export interface ColonistServiceI {
   initialColonistAmount: number
@@ -60,8 +63,14 @@ export class ColonistService implements ColonistServiceI {
 
   listenForOrders() {
     eventBus.value.on('resource-marked-for-harvest', (data) => {
-      const resourcePos = (data as { resourcePos: number[] }).resourcePos
-      this.jobs.push({ location: resourcePos, inProgress: false })
+      let d = data as GameStoreJob
+      console.log('D', d)
+      this.jobs.push({
+        location: d.location,
+        inProgress: false,
+        type: 'harvest',
+        resourceId: d.resourceId
+      })
     })
   }
 
@@ -91,9 +100,9 @@ export class ColonistService implements ColonistServiceI {
       // simulate job
       setTimeout(() => {
         console.log('Job completed')
-        this.jobs[0].inProgress
         this.jobs.shift()
         colonist.occupied = false
+        eventBus.value.emit('resource-harvested', { resourceId: job.resourceId })
       }, 2000) // Time taken to complete the job
     })
   }

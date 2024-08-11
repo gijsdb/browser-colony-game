@@ -1,4 +1,4 @@
-import Resource from './resource'
+import Resource from './Resource'
 
 export default class Tree extends Resource {
   private type: string

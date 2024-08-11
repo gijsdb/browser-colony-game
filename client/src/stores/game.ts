@@ -1,11 +1,15 @@
 import { defineStore } from 'pinia'
 import { ToRefs } from 'vue'
-import Resource from '@/game/entities/resources/resource'
-import Colonist from '@/game/entities/colonist'
+import Resource from '@/game/entities/resources/Resource'
+import Colonist from '@/game/entities/Colonist'
 import { Terrain } from '@/game/mapgen/TerrainGenerator'
 
 export type GameStoreType = ReturnType<typeof useGameStore>
 export type GameStoreRefsType = ToRefs<GameState>
+export type GameStoreJob = {
+  location: number[]
+  resourceId: number
+}
 
 export type GameState = {
   game: {
@@ -53,17 +57,21 @@ export const useGameStore = defineStore('GameStore', {
       this.game.currentScene = scene
     },
     storeAddResource(resource: Resource) {
+      resource.id = this.game.resources.length
       this.game.resources.push(resource)
     },
     storeAddColonist(colonist: Colonist) {
       this.game.colonists.push(colonist)
     },
-    storeSetResourceToHarvest(tileX: number, tileY: number): number[] | null {
+    storeSetResourceToHarvest(tileX: number, tileY: number): GameStoreJob | null {
       for (const resource of this.game.resources) {
         if (resource.x === tileX && resource.y === tileY) {
-          if (!resource.harvest) {
-            resource.harvest = true
-            return [tileX, tileY]
+          if (!resource.toHarvest) {
+            resource.toHarvest = true
+            return {
+              location: [tileX, tileY],
+              resourceId: resource.id!
+            }
           }
           break
         }

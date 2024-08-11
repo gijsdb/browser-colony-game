@@ -1,17 +1,26 @@
 export default class Resource {
-  private tilesheetId: number[]
+  public id?: number
   public x: number
   public y: number
-  public harvest: boolean
+  public tilesheetId: number[]
+  public toHarvest: boolean
   private harvested: boolean
   private harvestTime: number
 
   constructor(tilesheetId: number[], x: number, y: number) {
     this.tilesheetId = tilesheetId
-    this.harvest = false
+    this.toHarvest = false
     this.harvested = false
     this.harvestTime = 0
     this.x = x
     this.y = y
+  }
+
+  harvest() {
+    this.toHarvest = false
+    this.harvested = true
+    this.harvestTime = Date.now()
+    console.log('Resource harvested', this)
+    // give resource values to inventory
   }
 }

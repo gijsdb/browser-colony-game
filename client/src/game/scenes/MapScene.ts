@@ -5,8 +5,8 @@ import { TILE_VARIANTS } from '@/game/mapgen/TileVariants'
 import CameraController from '@/game/controllers/CameraController'
 import { isTileIdInObject } from '@/game/util'
 import { GameStoreType, useGameStore } from '@/stores/game'
-import { ColonistServiceI } from '../services/colonist'
-import { ResourceServiceI } from '../services/resource'
+import { ColonistServiceI } from '../services/Colonist'
+import { ResourceServiceI } from '../services/Resource'
 
 class MapScene extends Phaser.Scene {
   private colonistService?: ColonistServiceI
