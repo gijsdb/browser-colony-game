@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
-    "test": "jest"
+    "test": "jest --no-cache"
   },
   "dependencies": {
     "@types/node": "^22.1.0",

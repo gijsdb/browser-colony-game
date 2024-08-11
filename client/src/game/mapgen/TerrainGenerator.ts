@@ -3,6 +3,10 @@ import { TILE_VARIANTS } from './TileVariants'
 
 export type Terrain = number[][]
 
+interface TerrainGeneratorI {
+  generateTerrainPerlinNoise(width: number, height: number): Terrain
+}
+
 export class TerrainGenerator {
   constructor() {}
 
@@ -12,7 +16,7 @@ export class TerrainGenerator {
     for (let y = 0; y < height; y++) {
       terrain[y] = []
       for (let x = 0; x < width; x++) {
-        const value = noise(x / 35, y / 35)
+        const value = noise(x / 35, y / 35) // returns a value between -1 and 1
         if (value < -0.7) {
           terrain[y][x] = TILE_VARIANTS.GROUND_LAYER.WATER.WATER_CENTER.TILE_MAP_INDEX
         } else if (value < 0) {
@@ -24,10 +28,6 @@ export class TerrainGenerator {
         }
       }
     }
-
-    terrain = this.smoothTerrain(terrain, 2)
-    terrain = this.removeSmallWaterBodies(terrain, 30) // Adjust minimum size as needed
-    terrain = this.applyWaterEdges(terrain)
 
     return terrain
   }

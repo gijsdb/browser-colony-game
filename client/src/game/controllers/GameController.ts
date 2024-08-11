@@ -44,6 +44,9 @@ export default class GameController {
             this.store.game.map.mapWidthTiles,
             this.store.game.map.mapHeightTiles
           )
+          terrain = this.terrainGenerator.smoothTerrain(terrain, 2)
+          terrain = this.terrainGenerator.removeSmallWaterBodies(terrain, 30) // Adjust minimum size as needed
+          terrain = this.terrainGenerator.applyWaterEdges(terrain)
           terrain = this.terrainGenerator.addResourcesToTerrain(terrain)
           terrain = this.terrainGenerator.addDecorationToTerrain(terrain)
           storeSetTerrainLayout(terrain)
