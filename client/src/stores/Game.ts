@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { ToRefs } from 'vue'
-import Resource from '@/game/entities/resources/Resource'
-import Colonist from '@/game/entities/Colonist'
-import { Terrain } from '@/game/mapgen/TerrainGenerator'
+import Resource from '../game/entities/resources/Resource'
+import Colonist from '../game/entities/Colonist'
+import { Terrain } from '../game/mapgen/TerrainGenerator'
 
 export type GameStoreType = ReturnType<typeof useGameStore>
 export type GameStoreRefsType = ToRefs<GameState>

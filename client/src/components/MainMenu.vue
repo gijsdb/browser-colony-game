@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useUIStore } from '@/stores/ui'
+import { useUIStore } from '../stores/UI'
 
 const uiStore = useUIStore()
 const { storeStartGame } = uiStore

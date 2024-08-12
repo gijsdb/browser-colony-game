@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useUIStore } from '@/stores/ui'
+import { useUIStore } from '@/stores/UI'
 import GameUI from '@/components/GameUI.vue'
 
 const uiStore = useUIStore()

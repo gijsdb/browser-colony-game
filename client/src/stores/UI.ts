@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import GameController from '@/game/controllers/GameController'
+import GameController from '../game/controllers/GameController'
 
 type UIState = {
   ui: {

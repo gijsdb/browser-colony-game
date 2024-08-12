@@ -2,9 +2,9 @@ import Phaser from 'phaser'
 import MapScene from '../scenes/MapScene'
 import { TerrainGenerator } from '../mapgen/TerrainGenerator'
 import UIController from './UIController'
-import { GameStoreType, useGameStore } from '@/stores/game'
-import { ColonistService, ColonistServiceI } from '@/game/services/Colonist'
-import { ResourceServiceI, ResourceService } from '@/game/services/Resource'
+import { GameStoreType, useGameStore } from '../../stores/Game'
+import { ColonistService, ColonistServiceI } from '../services/Colonist'
+import { ResourceServiceI, ResourceService } from '../services/Resource'
 
 export default class GameController {
   private game: Phaser.Game | null

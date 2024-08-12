@@ -9,7 +9,7 @@
 import GameContainer from './components/GameContainer.vue'
 import MainMenu from './components/MainMenu.vue'
 import { storeToRefs } from 'pinia'
-import { useUIStore } from './stores/ui'
+import { useUIStore } from './stores/UI'
 
 const uiStore = useUIStore()
 let uiStoreRef = storeToRefs(uiStore)

@@ -1,5 +1,5 @@
-import { eventBus } from '@/eventBus'
-import { GameStoreRefsType, GameStoreType, useGameStore } from '@/stores/game'
+import { eventBus } from '../../eventBus'
+import { GameStoreRefsType, GameStoreType, useGameStore } from '../../stores/Game'
 import { storeToRefs } from 'pinia'
 import { TILE_VARIANTS } from '../mapgen/TileVariants'
 

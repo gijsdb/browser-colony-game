@@ -1,4 +1,4 @@
-import { GameStoreType, useGameStore } from '@/stores/game'
+import { GameStoreType, useGameStore } from '../../stores/Game'
 import { generateColonistName } from '../util'
 
 type ColonistBody = {

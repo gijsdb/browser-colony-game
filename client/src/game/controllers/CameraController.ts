@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { GameStoreType, GameStoreRefsType, useGameStore } from '@/stores/game'
+import { GameStoreType, GameStoreRefsType, useGameStore } from '../../stores/Game'
 import { storeToRefs } from 'pinia'
 
 export default interface KeyBindings {

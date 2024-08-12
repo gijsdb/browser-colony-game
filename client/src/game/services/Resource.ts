@@ -1,9 +1,9 @@
-import { GameStoreRefsType, GameStoreType, useGameStore } from '@/stores/game'
+import { GameStoreRefsType, GameStoreType, useGameStore } from '../../stores/Game'
 import { TILE_VARIANTS } from '../mapgen/TileVariants'
 import { storeToRefs } from 'pinia'
 import Mushroom from '../entities/resources/Mushroom'
 import Tree from '../entities/resources/Tree'
-import { eventBus } from '@/eventBus'
+import { eventBus } from '../../eventBus'
 import Resource from '../entities/resources/Resource'
 
 export interface ResourceServiceI {

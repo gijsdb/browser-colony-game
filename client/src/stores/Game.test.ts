@@ -1,8 +1,8 @@
 import Phaser from 'phaser'
 import { setActivePinia, createPinia } from 'pinia'
-import { GameStoreJob, useGameStore } from './game'
-import Resource from '@/game/entities/resources/Resource'
-import Colonist from '@/game/entities/Colonist'
+import { GameStoreJob, useGameStore } from './Game'
+import Resource from '../game/entities/resources/Resource'
+import Colonist from '../game/entities/Colonist'
 
 global.Phaser = Phaser
 
@@ -12,10 +12,6 @@ describe('Game store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     store = useGameStore()
-  })
-
-  afterEach(() => {
-    store.storeReset()
   })
 
   it('should store the tilemap correctly', () => {

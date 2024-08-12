@@ -1,8 +1,8 @@
-import { GameStoreJob, GameStoreRefsType, GameStoreType, useGameStore } from '@/stores/game'
+import { GameStoreJob, GameStoreRefsType, GameStoreType, useGameStore } from '../../stores/Game'
 import { TILE_VARIANTS } from '../mapgen/TileVariants'
 import Colonist from '../entities/Colonist'
 import { storeToRefs } from 'pinia'
-import { eventBus } from '@/eventBus'
+import { eventBus } from '../../eventBus'
 
 type Job = {
   location: number[] //x,y
@@ -47,8 +47,11 @@ export class ColonistService implements ColonistServiceI {
         x = Phaser.Math.Between(centerX - spawnRadius, centerX + spawnRadius)
         y = Phaser.Math.Between(centerY - spawnRadius, centerY + spawnRadius)
         let tile = this.storeRefs.game.value.map.tileMap?.getTileAt(x, y, false, 'Ground')
-
-        if (tile!.index != TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX) {
+        if (!tile) {
+          throw Error('No tile to spawn colonist')
+          return
+        }
+        if (tile.index != TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX) {
           x = null
           y = null
         }
