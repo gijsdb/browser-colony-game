@@ -10,6 +10,15 @@
       </div>
     </div>
 
+    <div class="absolute top-2 left-2">
+      <div class="text-light-gray text-gray-400">
+        <p>Inventory</p>
+        <ul v-for="(item, key) in gameStoreRefs.game.value.inventory">
+          <li>{{ key }} : {{ item }}</li>
+        </ul>
+      </div>
+    </div>
+
     <div class="absolute bottom-2 left-2 text-light-gray text-gray-400 flex gap-x-2 items-end">
       <div>
         <button @click="handleClick" class="border-2 border-gray-400 bg-[#181818] h-12 p-2">
@@ -37,7 +46,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { eventBus } from '@/eventBus'
+import { useGameStore } from '../stores/Game'
+
+const gameStore = useGameStore()
+const gameStoreRefs = storeToRefs(gameStore)
 
 type tileInfo = {
   tileX: string

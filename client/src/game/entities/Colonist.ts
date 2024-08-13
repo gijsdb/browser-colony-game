@@ -79,7 +79,6 @@ export default class Colonist {
   }
 
   moveColonistTo(targetLocation: number[], onArrival: () => void) {
-    this.occupied = true
     let targetX = this.store.game.map.tileMap?.tileToWorldX(targetLocation[0])
     let targetY = this.store.game.map.tileMap?.tileToWorldY(targetLocation[1])
 
@@ -108,7 +107,6 @@ export default class Colonist {
 
         this.x = targetX
         this.y = targetY
-
         onArrival()
       }
     })

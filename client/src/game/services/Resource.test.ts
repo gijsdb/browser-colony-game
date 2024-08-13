@@ -8,6 +8,7 @@ import Phaser from 'phaser'
 import phaserSceneMock from '../../../__mocks__/phaserSceneMock'
 import phaserTilemapMock from '../../../__mocks__/phaserTilemapMock'
 import { eventBus } from '../../eventBus'
+import Resource from '../entities/resources/Resource'
 
 global.Phaser = Phaser
 
@@ -55,7 +56,10 @@ describe('resource service', () => {
         map: {
           tileMap: mockTilemap,
           tileSize: 32,
-          terrainLayout: [],
+          terrainLayout: [
+            [1, 2],
+            [3, 4]
+          ],
           mapWidthTiles: 100,
           mapHeightTiles: 100
         },
@@ -70,5 +74,10 @@ describe('resource service', () => {
     rs.listenForHarvests()
 
     expect(eventBus.value.on).toHaveBeenCalledWith('resource-harvested', expect.any(Function))
+  })
+
+  it('removes harvested resource from terrain', () => {
+    let resource = new Resource([42, 26], 4, 3, 30)
+    rs.removeHarvestedResourceFromTerrain(resource)
   })
 })

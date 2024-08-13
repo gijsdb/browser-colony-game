@@ -3,6 +3,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { GameStoreJob, useGameStore } from './Game'
 import Resource from '../game/entities/resources/Resource'
 import Colonist from '../game/entities/Colonist'
+import Tree from '../game/entities/resources/Tree'
 
 global.Phaser = Phaser
 
@@ -88,5 +89,13 @@ describe('Game store', () => {
     expect(store.game.resources).toHaveLength(0)
     expect(store.game.colonists).toHaveLength(0)
     expect(store.game.currentScene).toBeUndefined()
+  })
+
+  it('should add resource and value to inventory', () => {
+    let resource = new Tree(0, 0)
+    let value = resource.harvest()
+    store.storeAddResourceToInventory(resource, value)
+
+    expect(store.game.inventory.wood).toEqual(value)
   })
 })

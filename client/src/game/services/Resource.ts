@@ -20,50 +20,40 @@ export class ResourceService implements ResourceServiceI {
   }
 
   listenForHarvests() {
+    const { storeAddResourceToInventory } = this.store
     eventBus.value.on('resource-harvested', (data) => {
       const harvestedResourceId = data as { resourceId: number }
       console.log(harvestedResourceId)
       this.storeRefs.game.value.resources.map((resource) => {
         if (resource.id === harvestedResourceId.resourceId) {
-          resource.harvest()
+          let value = resource.harvest()
+          this.removeHarvestedResourceFromTerrain(resource)
+          storeAddResourceToInventory(resource, value)
         }
-        this.removeHarvestedResourceFromTerrain(resource)
       })
     })
   }
 
+  //todo: if tree remove tree top tile also
   removeHarvestedResourceFromTerrain(resource: Resource) {
     const terrain = this.storeRefs.game.value.map.terrainLayout
-    const { tileMap, tileSize } = this.storeRefs.game.value.map
+    const { tileMap } = this.storeRefs.game.value.map
 
-    // Get the current tile
-    let tile = terrain[resource.y][resource.x]
+    terrain[resource.y][resource.x] = TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX
 
-    // Check if the current tile is one of the resource's tiles
-    if (tile === resource.tilesheetId[0] || tile === resource.tilesheetId[1]) {
-      // Update the terrain layout to the grass tile
-      terrain[resource.y][resource.x] = TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX
+    tileMap!.removeTileAt(resource.x, resource.y, false, false, 'Resource')
 
-      // Remove the resource tile from the map
-      tileMap?.removeTileAt(resource.x, resource.y, false, false, 'Resource')
-
-      tileMap?.removeTileAtWorldXY(
-        resource.x,
-        resource.y,
-        true,
-        false,
-        this.storeRefs.game.value.currentScene?.cameras.main,
-        'Resource'
-      )
-      // Replace the tile with a grass tile in the "Ground" layer
-      tileMap?.putTileAt(
-        TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX,
-        resource.x,
-        resource.y,
-        false,
-        'Ground'
-      )
+    // not perfect, this assumes the extra tile for a tree is at y-1.
+    if (resource.tilesheetId.length > 1) {
+      tileMap!.removeTileAt(resource.x, resource.y - 1, false, false, 'Resource')
     }
+    tileMap!.putTileAt(
+      TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX,
+      resource.x,
+      resource.y,
+      false,
+      'Ground'
+    )
   }
 
   // Initializes the entities for the resources placed around the terrain

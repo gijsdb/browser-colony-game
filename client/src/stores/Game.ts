@@ -3,12 +3,17 @@ import { ToRefs } from 'vue'
 import Resource from '../game/entities/resources/Resource'
 import Colonist from '../game/entities/Colonist'
 import { Terrain } from '../game/mapgen/TerrainGenerator'
+import Tree from '../game/entities/resources/Tree'
 
 export type GameStoreType = ReturnType<typeof useGameStore>
 export type GameStoreRefsType = ToRefs<GameState>
 export type GameStoreJob = {
   location: number[]
   resourceId: number
+}
+
+export type Inventory = {
+  wood: number
 }
 
 export type GameState = {
@@ -23,6 +28,7 @@ export type GameState = {
       terrainLayout: Terrain
     }
     currentScene: Phaser.Scene | undefined
+    inventory: Inventory
   }
 }
 
@@ -39,7 +45,10 @@ export const useGameStore = defineStore('GameStore', {
           mapWidthTiles: 100,
           mapHeightTiles: 100
         },
-        currentScene: undefined
+        currentScene: undefined,
+        inventory: {
+          wood: 0
+        }
       }
     }
   },
@@ -78,6 +87,12 @@ export const useGameStore = defineStore('GameStore', {
       }
       return null
     },
+    storeAddResourceToInventory(resource: Resource, value: number) {
+      switch (true) {
+        case resource instanceof Tree:
+          this.game.inventory.wood = this.game.inventory.wood + value
+      }
+    },
     storeReset() {
       this.game = {
         resources: [],
@@ -89,7 +104,10 @@ export const useGameStore = defineStore('GameStore', {
           mapWidthTiles: 100,
           mapHeightTiles: 100
         },
-        currentScene: undefined
+        currentScene: undefined,
+        inventory: {
+          wood: 0
+        }
       }
     }
   }
