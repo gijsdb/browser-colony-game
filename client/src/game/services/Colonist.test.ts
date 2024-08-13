@@ -1,43 +1,17 @@
+import eventBusMock from '../../../__mocks__/eventBusMock'
+import phaserMock from '../../../__mocks__/phaserMock'
 import { createTestingPinia } from '@pinia/testing'
 import { setActivePinia } from 'pinia'
 import { ColonistService } from './Colonist'
 import { useGameStore } from '../../stores/Game'
-import Phaser, { GameObjects } from 'phaser'
+import phaserSceneMock from '../../../__mocks__/phaserSceneMock'
+import phaserTilemapMock from '../../../__mocks__/phaserTilemapMock'
+import Phaser from 'phaser'
+import { eventBus } from '../../eventBus'
 
 global.Phaser = Phaser
-
-jest.mock('phaser', () => ({
-  Game: jest.fn(),
-  GameObjects: {
-    Sprite: jest.fn().mockImplementation(() => ({
-      setOrigin: jest.fn().mockReturnThis(),
-      setDepth: jest.fn().mockReturnThis(),
-      add: jest.fn()
-    })),
-    Text: jest.fn().mockImplementation(() => ({
-      setOrigin: jest.fn().mockReturnThis()
-    })),
-    Container: jest.fn().mockImplementation(() => ({
-      add: jest.fn()
-    }))
-  },
-  Scene: jest.fn(),
-  Math: {
-    Between: jest.fn().mockReturnValue(50),
-    Distance: {
-      Between: jest.fn().mockReturnValue(10)
-    }
-  }
-}))
-
-jest.mock('../../eventBus', () => ({
-  eventBus: {
-    value: {
-      on: jest.fn(),
-      emit: jest.fn()
-    }
-  }
-}))
+jest.mock('phaser', () => phaserMock)
+jest.mock('../../eventBus', () => eventBusMock)
 
 jest.mock('../mapgen/TileVariants', () => ({
   TILE_VARIANTS: {
@@ -49,36 +23,16 @@ jest.mock('../mapgen/TileVariants', () => ({
   }
 }))
 
-describe('testing colonist service', () => {
+describe('colonist service', () => {
   let cs: ColonistService
   let store: ReturnType<typeof useGameStore>
+  let mockScene: any
+  let mockTilemap: any
 
   beforeEach(async () => {
-    const mockTilemap = {
-      getTileAt: jest.fn().mockReturnValue({
-        index: 0 // Mocked tile index for GRASS
-      })
-    }
+    mockTilemap = phaserTilemapMock
 
-    const mockScene = {
-      add: {
-        sprite: jest.fn().mockReturnValue({
-          setOrigin: jest.fn().mockReturnThis(),
-          setDepth: jest.fn().mockReturnThis(),
-          add: jest.fn()
-        }),
-        text: jest.fn().mockReturnValue({
-          setOrigin: jest.fn().mockReturnThis()
-        }),
-        container: jest.fn().mockReturnValue({
-          add: jest.fn()
-        })
-      },
-      anims: {
-        create: jest.fn(),
-        generateFrameNumbers: jest.fn().mockReturnValue([])
-      }
-    }
+    mockScene = phaserSceneMock
 
     const pinia = createTestingPinia({
       initialState: {
@@ -130,8 +84,56 @@ describe('testing colonist service', () => {
     expect(store.game.colonists.length).toBe(3)
   })
 
-  // it('creates animations', () => {
-  //   cs.createAnimations()
-  //   expect(mockScene.anims.create).toHaveBeenCalledTimes(6)
+  it('creates animations', () => {
+    cs.createAnimations()
+    expect(mockScene.anims.create).toHaveBeenCalledTimes(6)
+  })
+
+  it('listens for orders', () => {
+    cs.listenForOrders()
+    expect(eventBus.value.on).toHaveBeenCalledWith(
+      'resource-marked-for-harvest',
+      expect.any(Function)
+    )
+  })
+
+  it('performs a job', () => {
+    jest.useFakeTimers()
+    const mockColonist = {
+      moveColonistTo: jest.fn((location, callback) => callback()),
+      occupied: true
+    }
+    jest.spyOn(cs, 'getClosestColonist').mockReturnValue(mockColonist as any)
+
+    const job = { location: [10, 20], inProgress: false, type: 'harvest' as const, resourceId: 1 }
+    cs.performJob(job)
+
+    expect(job.inProgress).toBe(true)
+    expect(mockColonist.moveColonistTo).toHaveBeenCalled()
+
+    jest.runAllTimers()
+
+    expect(eventBus.value.emit).toHaveBeenCalledWith('resource-harvested', { resourceId: 1 })
+    expect(mockColonist.occupied).toBe(false)
+  })
+
+  // it('gets the closest colonist', () => {
+  //   const mockColonists = [
+  //     { x: 0, y: 0, occupied: false },
+  //     { x: 5, y: 5, occupied: false },
+  //     { x: 10, y: 10, occupied: false }
+  //   ]
+  //   store.$patch({ game: { colonists: mockColonists } })
+
+  //   const closestColonist = cs.getClosestColonist([3, 3])
+  //   expect(closestColonist).toEqual(mockColonists[1])
+  // })
+
+  // it('destroys the service', () => {
+  //   jest.useFakeTimers()
+
+  //   cs.startJobProcessing()
+  //   cs.destroy()
+  //   expect(clearInterval).toHaveBeenCalled()
   // })
 })

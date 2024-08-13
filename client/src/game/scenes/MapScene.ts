@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
-import tiles from '@/assets/tilesets/forest_tiles_fixed.png'
-import colonist_img from '@/assets/characters/colonist.png'
+import tiles from '../../assets/tilesets/forest_tiles_fixed.png'
+import colonist_img from '../../assets/characters/colonist.png'
 import { TILE_VARIANTS } from '../mapgen/TileVariants'
 import CameraController from '../controllers/CameraController'
 import { isTileIdInObject } from '../util'
