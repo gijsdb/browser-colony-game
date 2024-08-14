@@ -2,6 +2,8 @@ import { eventBus } from '../../eventBus'
 import { GameStoreRefsType, GameStoreType, useGameStore } from '../../stores/Game'
 import { storeToRefs } from 'pinia'
 import { TILE_VARIANTS } from '../mapgen/TileVariants'
+import { ColonistServiceI } from '../services/Colonist'
+import { ResourceServiceI } from '../services/Resource'
 
 type ClickMode = 'normal' | 'harvestWood'
 
@@ -10,8 +12,10 @@ export default class UIController {
   private store: GameStoreType
   private storeRefs: GameStoreRefsType
   private clickMode: ClickMode
+  private colonistService: ColonistServiceI
+  private resourceService: ResourceServiceI
 
-  constructor() {
+  constructor(colonistService: ColonistServiceI, resourceService: ResourceServiceI) {
     this.store = useGameStore()
     this.storeRefs = storeToRefs(this.store)
     this.tileBorderGraphics = null
@@ -19,6 +23,8 @@ export default class UIController {
     this.storeRefs.game.value.currentScene!.input.setDefaultCursor(
       'url(./src/assets/cursors/pointer.svg), pointer'
     )
+    this.colonistService = colonistService
+    this.resourceService = resourceService
     this.listen()
   }
 
@@ -91,7 +97,6 @@ export default class UIController {
   }
 
   handleTileClick(tileX: number, tileY: number) {
-    const { storeSetResourceToHarvest } = this.store
     let tileClicked = this.storeRefs.game.value.map.terrainLayout[tileY][tileX]
     switch (this.clickMode) {
       case 'harvestWood':
@@ -99,10 +104,12 @@ export default class UIController {
           tileClicked === TILE_VARIANTS.RESOURCE_LAYER.TREE_TOP.TILE_MAP_INDEX ||
           tileClicked === TILE_VARIANTS.RESOURCE_LAYER.TREE_TRUNK.TILE_MAP_INDEX
         ) {
-          let gameStoreJob = storeSetResourceToHarvest(tileX, tileY)
-          if (gameStoreJob) {
-            eventBus.value.emit('resource-marked-for-harvest', gameStoreJob)
-          }
+          // let resource = this.resourceService.markResourceForHarvest(tileX, tileY)
+          // if (!resource) {
+          //   console.log('No resource found to harvest')
+          //   return
+          // }
+          // this.colonistService.createNewJob(resource, 'harvest')
         }
       default:
         console.log(`Clicked on tile: x=${tileX}, y=${tileY}`)

@@ -7,10 +7,12 @@ import { isTileIdInObject } from '../util'
 import { GameStoreType, useGameStore } from '../../stores/Game'
 import { ColonistServiceI } from '../services/Colonist'
 import { ResourceServiceI } from '../services/Resource'
+import { JobServiceI } from '../services/JobService'
 
 class MapScene extends Phaser.Scene {
   private colonistService?: ColonistServiceI
   private resourceService?: ResourceServiceI
+  private jobService?: JobServiceI
   private cameraController?: CameraController
   private butterflies: Phaser.GameObjects.Group | undefined
   private store: GameStoreType
@@ -136,8 +138,11 @@ class MapScene extends Phaser.Scene {
     }
   }
 
-  update() {
+  update(time: number, delta: number) {
     this.cameraController?.update()
+    this.colonistService?.update(delta)
+    this.jobService?.update(delta)
+    // this.resourceService?.update(delta)
   }
 
   // moved here butterfly stuff here for now

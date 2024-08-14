@@ -69,29 +69,33 @@ export const useGameStore = defineStore('GameStore', {
       resource.id = this.game.resources.length
       this.game.resources.push(resource)
     },
-    storeAddColonist(colonist: Colonist) {
+    storeAddColonist(colonist: Colonist): Colonist {
+      colonist.id = this.game.colonists.length
       this.game.colonists.push(colonist)
+
+      return colonist
     },
-    storeSetResourceToHarvest(tileX: number, tileY: number): GameStoreJob | null {
+    storeUpdateColonist(colonistToUpdate: Colonist) {
+      this.game.colonists.forEach((colonist) => {
+        if (colonist.id === colonistToUpdate.id) {
+          colonist = colonistToUpdate
+        }
+      })
+    },
+    storeSetResourceToHarvest(tileX: number, tileY: number): Resource | null {
       for (const resource of this.game.resources) {
         if (resource.x === tileX && resource.y === tileY) {
           if (!resource.toHarvest) {
             resource.toHarvest = true
-            return {
-              location: [tileX, tileY],
-              resourceId: resource.id!
-            }
+            return resource
           }
           break
         }
       }
       return null
     },
-    storeAddResourceToInventory(resource: Resource, value: number) {
-      switch (true) {
-        case resource instanceof Tree:
-          this.game.inventory.wood = this.game.inventory.wood + value
-      }
+    storeAddResourceToInventory(type: string, value: number) {
+      this.game.inventory[type].value = this.game.inventory[type] + value
     },
     storeReset() {
       this.game = {

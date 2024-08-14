@@ -5,6 +5,7 @@ import UIController from './UIController'
 import { GameStoreType, useGameStore } from '../../stores/Game'
 import { ColonistService, ColonistServiceI } from '../services/Colonist'
 import { ResourceServiceI, ResourceService } from '../services/Resource'
+import { GameStoreRepo, GameStoreRepoI } from '../../repositories/GameStoreRepo'
 
 export default class GameController {
   private game: Phaser.Game | null
@@ -12,15 +13,16 @@ export default class GameController {
   private store: GameStoreType
   private colonistService: ColonistServiceI
   private resourceService: ResourceServiceI
+  private gameStoreRepo: GameStoreRepoI
   private uiController?: UIController
 
   constructor(colonistAmount: number) {
     this.store = useGameStore()
     const { storeSetTerrainLayout, storeSetCurrentScene } = this.store
-
+    this.gameStoreRepo = new GameStoreRepo()
     this.terrainGenerator = new TerrainGenerator()
-    this.colonistService = new ColonistService(colonistAmount)
-    this.resourceService = new ResourceService()
+    this.colonistService = new ColonistService(colonistAmount, this.gameStoreRepo)
+    this.resourceService = new ResourceService(this.gameStoreRepo)
 
     const config = {
       type: Phaser.AUTO,
@@ -54,7 +56,7 @@ export default class GameController {
         postBoot: (game: Phaser.Game) => {
           const scene = game.scene.getScene('MapScene')
           storeSetCurrentScene(scene)
-          this.uiController = new UIController()
+          this.uiController = new UIController(this.colonistService, this.resourceService)
           this.uiController.setUpInputHandlers()
         }
       }

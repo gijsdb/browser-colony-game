@@ -1,5 +1,6 @@
 import { GameStoreType, useGameStore } from '../../stores/Game'
 import { generateColonistName } from '../util'
+import Job from './Job'
 
 type ColonistBody = {
   headLeft: Phaser.GameObjects.Sprite
@@ -11,15 +12,19 @@ type ColonistBody = {
 }
 
 export default class Colonist {
+  public id?: number
   private scene: Phaser.Scene
   public x: number
   public y: number
   private name: string
   private body: ColonistBody
   private walkingSpeed: number
-  public occupied: boolean
+  public occupied: boolean = false
   private nameTag: Phaser.GameObjects.Text
   private container: Phaser.GameObjects.Container
+  private currentPath: Phaser.Math.Vector2[] | null = null
+  private currentPathIndex: number = 0
+  public currentJob: Job | null = null
   private store: GameStoreType
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -28,8 +33,7 @@ export default class Colonist {
     this.scene = scene
     this.x = x
     this.y = y
-    this.walkingSpeed = 100
-    this.occupied = false
+    this.walkingSpeed = 5000
 
     this.body = {
       headLeft: this.scene.add.sprite(0, 0, 'colonist', 0),
@@ -78,37 +82,144 @@ export default class Colonist {
     this.body.legsRight.stop()
   }
 
-  moveColonistTo(targetLocation: number[], onArrival: () => void) {
-    let targetX = this.store.game.map.tileMap?.tileToWorldX(targetLocation[0])
-    let targetY = this.store.game.map.tileMap?.tileToWorldY(targetLocation[1])
-
-    if (!targetX || !targetY) {
-      throw Error('Failed parsing target for colonist move')
+  update(delta: number) {
+    if (this.currentJob && !this.occupied) {
+      this.startJobMovement()
     }
 
-    const distance = Phaser.Math.Distance.Between(
-      this.x * this.store.game.map.tileSize,
-      this.y * this.store.game.map.tileSize,
-      targetX,
-      targetY
-    )
-
-    const duration = (distance / this.walkingSpeed) * 1000
-
-    this.playWalkAnimation()
-
-    this.scene.tweens.add({
-      targets: this.container,
-      x: targetX,
-      y: targetY,
-      duration: duration,
-      onComplete: () => {
-        this.stopWalkAnimation()
-
-        this.x = targetX
-        this.y = targetY
-        onArrival()
-      }
-    })
+    if (this.currentPath) {
+      this.moveAlongPath(delta)
+    } else if (this.currentJob && this.isAtJobLocation()) {
+      this.performJob(delta)
+    } else {
+      this.idle()
+    }
   }
+
+  private startJobMovement() {
+    if (this.currentJob) {
+      const jobLocation = new Phaser.Math.Vector2(this.currentJob.x, this.currentJob.y)
+      this.currentPath = this.scene.pathfinder.findPath(
+        new Phaser.Math.Vector2(this.x, this.y),
+        jobLocation
+      )
+      this.currentPathIndex = 0
+      this.occupied = true
+    }
+  }
+
+  private moveAlongPath(delta: number) {
+    if (!this.currentPath || this.currentPathIndex >= this.currentPath.length) {
+      this.currentPath = null
+      return
+    }
+
+    const targetPoint = this.currentPath[this.currentPathIndex]
+    const distance = Phaser.Math.Distance.Between(this.x, this.y, targetPoint.x, targetPoint.y)
+
+    if (distance < 1) {
+      this.currentPathIndex++
+      if (this.currentPathIndex >= this.currentPath.length) {
+        this.currentPath = null
+        return
+      }
+    }
+
+    const angle = Phaser.Math.Angle.Between(this.x, this.y, targetPoint.x, targetPoint.y)
+    const velocityX = Math.cos(angle) * this.walkingSpeed * (delta / 1000)
+    const velocityY = Math.sin(angle) * this.walkingSpeed * (delta / 1000)
+
+    this.x += velocityX
+    this.y += velocityY
+    this.container.setPosition(this.x, this.y)
+
+    this.updateAnimation(velocityX, velocityY)
+  }
+
+  private performJob(delta: number) {
+    if (this.currentJob) {
+      this.currentJob.progress += delta
+      if (this.currentJob.progress >= this.currentJob.duration) {
+        this.completeJob()
+      }
+    }
+  }
+
+  private isAtJobLocation(): boolean {
+    return (
+      this.currentJob! &&
+      Math.abs(this.x - this.currentJob.x) < 1 &&
+      Math.abs(this.y - this.currentJob.y) < 1
+    )
+  }
+
+  private idle() {
+    // Implement idle behavior if needed
+    this.stopWalkAnimation()
+  }
+
+  private updateAnimation(velocityX: number, velocityY: number) {
+    if (Math.abs(velocityX) > Math.abs(velocityY)) {
+      this.container.play(velocityX > 0 ? 'colonist_walk_right' : 'colonist_walk_left', true)
+    } else if (velocityY !== 0) {
+      this.container.play(velocityY > 0 ? 'colonist_walk_down' : 'colonist_walk_up', true)
+    } else {
+      this.container.play('colonist_idle', true)
+    }
+  }
+
+  assignJob(job: Job) {
+    this.currentJob = job
+    this.occupied = false // This will trigger movement to job location on next update
+  }
+
+  completeJob() {
+    // Notify job completion (you might want to emit an event here)
+    this.currentJob = null
+    this.occupied = false
+  }
+
+  getState() {
+    return {
+      x: this.x,
+      y: this.y,
+      occupied: this.occupied,
+      hasJob: !!this.currentJob,
+      jobProgress: this.currentJob ? this.currentJob.progress : 0
+    }
+  }
+
+  // moveColonistTo(targetLocation: number[], onArrival: () => void) {
+  //   let targetX = this.store.game.map.tileMap?.tileToWorldX(targetLocation[0])
+  //   let targetY = this.store.game.map.tileMap?.tileToWorldY(targetLocation[1])
+
+  //   if (!targetX || !targetY) {
+  //     throw Error('Failed parsing target for colonist move')
+  //   }
+
+  //   const distance = Phaser.Math.Distance.Between(
+  //     this.x * this.store.game.map.tileSize,
+  //     this.y * this.store.game.map.tileSize,
+  //     targetX,
+  //     targetY
+  //   )
+
+  //   const duration = this.walkingSpeed
+
+  //   this.playWalkAnimation()
+
+  //   this.scene.tweens.add({
+  //     targets: this.container,
+  //     x: targetX,
+  //     y: targetY,
+  //     duration: duration,
+  //     onComplete: () => {
+  //       this.stopWalkAnimation()
+
+  //       this.x = targetX
+  //       this.y = targetY
+  //       onArrival()
+  //     }
+  //   })
+  // }
 }

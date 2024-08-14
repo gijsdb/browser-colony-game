@@ -90,7 +90,7 @@ describe('colonist service', () => {
   })
 
   it('listens for orders', () => {
-    cs.listenForOrders()
+    cs.createNewJob()
     expect(eventBus.value.on).toHaveBeenCalledWith(
       'resource-marked-for-harvest',
       expect.any(Function)

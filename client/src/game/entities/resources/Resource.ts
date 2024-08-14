@@ -4,9 +4,9 @@ export default class Resource {
   public y: number
   public tilesheetId: number[]
   public toHarvest: boolean
-  private harvested: boolean
-  private harvestTime: number
-  private value: number
+  public harvested: boolean
+  public harvestTime: number
+  public value: number
 
   constructor(tilesheetId: number[], x: number, y: number, value: number) {
     this.tilesheetId = tilesheetId

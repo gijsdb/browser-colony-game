@@ -5,18 +5,27 @@ import Mushroom from '../entities/resources/Mushroom'
 import Tree from '../entities/resources/Tree'
 import { eventBus } from '../../eventBus'
 import Resource from '../entities/resources/Resource'
+import { GameStoreRepoI } from '../../repositories/GameStoreRepo'
 
 export interface ResourceServiceI {
   spawnResources(): void
+  markResourceForHarvest(tileX: number, tileY: number): Resource | null
 }
 
 export class ResourceService implements ResourceServiceI {
   private store: GameStoreType
   private storeRefs: GameStoreRefsType
+  private gameStoreRepo: GameStoreRepoI
 
-  constructor() {
+  constructor(gameStoreRepo: GameStoreRepoI) {
     this.store = useGameStore()
     this.storeRefs = storeToRefs(this.store)
+    this.gameStoreRepo = gameStoreRepo
+  }
+
+  markResourceForHarvest(tileX: number, tileY: number): Resource | null {
+    let resource = this.gameStoreRepo.markResourceForHarvest(tileX, tileY)
+    return resource
   }
 
   listenForHarvests() {
