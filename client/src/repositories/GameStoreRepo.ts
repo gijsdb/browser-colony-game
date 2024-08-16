@@ -7,7 +7,7 @@ import Resource from '../game/entities/resources/Resource'
 export interface GameStoreRepoI {
   addColonist(colonist: Colonist): Colonist
   markResourceForHarvest(tileX: number, tileY: number): Resource | null
-  addResourceToInventory(type: string, value: number)
+  addResourceToInventory(type: string, value: number): void
 }
 
 export class GameStoreRepo implements GameStoreRepoI {
@@ -19,18 +19,21 @@ export class GameStoreRepo implements GameStoreRepoI {
     this.storeRefs = storeToRefs(this.store)
   }
 
-  // syncState(colonistState: ColonistState, resourceState: ResourceState) {
-  //   // Update colonist state
-  //   this.store.storeSetColonists(colonistState.colonists)
-  //   this.store.storeSetJobs(colonistState.jobs)
+  syncState(colonistState: any, resourceState: any) {
+    const { storeUpdateColonist } = this.store
+    const { storeSetJobs } = this.store
 
-  //   // Update resource state
-  //   this.store.storeSetResources(resourceState.resources)
-  //   this.store.storeSetInventory(resourceState.inventory)
+    // Update colonist state
+    storeUpdateColonist(colonistState.colonists)
+    this.store.storeSetJobs(colonistState.jobs)
 
-  //   // You might also want to update other game state here
-  //   // For example, map state, time, etc.
-  // }
+    // Update resource state
+    // this.store.storeSetResources(resourceState.resources)
+    // this.store.storeSetInventory(resourceState.inventory)
+
+    // You might also want to update other game state here
+    // For example, map state, time, etc.
+  }
 
   addColonist(colonist: Colonist): Colonist {
     const { storeAddColonist } = this.store
@@ -43,7 +46,7 @@ export class GameStoreRepo implements GameStoreRepoI {
     return storeSetResourceToHarvest(tileX, tileY)
   }
 
-  addResourceToInventory(type: string, value: number) {
+  addResourceToInventory(type: string, value: number): void {
     const { storeAddResourceToInventory } = this.store
     // move more logic into here from the store for this func
     return storeAddResourceToInventory(type, value)

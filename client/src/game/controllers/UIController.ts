@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { TILE_VARIANTS } from '../mapgen/TileVariants'
 import { ColonistServiceI } from '../services/Colonist'
 import { ResourceServiceI } from '../services/Resource'
+import { JobServiceI } from '../services/Job'
 
 type ClickMode = 'normal' | 'harvestWood'
 
@@ -14,8 +15,13 @@ export default class UIController {
   private clickMode: ClickMode
   private colonistService: ColonistServiceI
   private resourceService: ResourceServiceI
+  private jobService: JobServiceI
 
-  constructor(colonistService: ColonistServiceI, resourceService: ResourceServiceI) {
+  constructor(
+    colonistService: ColonistServiceI,
+    resourceService: ResourceServiceI,
+    jobService: JobServiceI
+  ) {
     this.store = useGameStore()
     this.storeRefs = storeToRefs(this.store)
     this.tileBorderGraphics = null
@@ -25,6 +31,7 @@ export default class UIController {
     )
     this.colonistService = colonistService
     this.resourceService = resourceService
+    this.jobService = jobService
     this.listen()
   }
 
@@ -104,12 +111,7 @@ export default class UIController {
           tileClicked === TILE_VARIANTS.RESOURCE_LAYER.TREE_TOP.TILE_MAP_INDEX ||
           tileClicked === TILE_VARIANTS.RESOURCE_LAYER.TREE_TRUNK.TILE_MAP_INDEX
         ) {
-          // let resource = this.resourceService.markResourceForHarvest(tileX, tileY)
-          // if (!resource) {
-          //   console.log('No resource found to harvest')
-          //   return
-          // }
-          // this.colonistService.createNewJob(resource, 'harvest')
+          let job = this.jobService.createJob('harvest', tileX, tileY, 'wood', 30)
         }
       default:
         console.log(`Clicked on tile: x=${tileX}, y=${tileY}`)

@@ -6,14 +6,14 @@ import { eventBus } from '../../eventBus'
 import { GameStoreRepoI } from '../../repositories/GameStoreRepo'
 import Resource from '../entities/resources/Resource'
 import { Job } from '../entities/Job'
-import { JobServiceI } from './JobService'
+import { JobServiceI } from './Job'
 
 export interface ColonistServiceI {
   initialColonistAmount: number
   spawnColonist(amount: number): void
   createAnimations(): void
   update(delta: number): void
-  destroy(): void
+  getState(): any
 }
 
 export class ColonistService implements ColonistServiceI {
@@ -21,6 +21,8 @@ export class ColonistService implements ColonistServiceI {
   private colonists: Colonist[] = []
   private jobService: JobServiceI
   private gameStoreRepo: GameStoreRepoI
+  private store: GameStoreType
+  private storeRefs: GameStoreRefsType
 
   constructor(
     initialColonistAmount: number,
@@ -30,6 +32,26 @@ export class ColonistService implements ColonistServiceI {
     this.initialColonistAmount = initialColonistAmount
     this.jobService = jobService
     this.gameStoreRepo = gameStoreRepo
+    this.store = useGameStore()
+    this.storeRefs = storeToRefs(this.store)
+  }
+
+  update(delta: number) {
+    this.colonists.forEach((colonist) => {
+      colonist.update(delta)
+
+      if (!colonist.occupied && !colonist.currentJob) {
+        const job = this.jobService.assignJob(colonist.id)
+        if (job) {
+          colonist.assignJob(job)
+        }
+      }
+
+      if (colonist.currentJob && colonist.currentJob.isCompleted) {
+        this.jobService.completeJob(colonist.currentJob.id)
+        colonist.completeJob()
+      }
+    })
   }
 
   spawnColonist(amount: number): void {
@@ -50,86 +72,18 @@ export class ColonistService implements ColonistServiceI {
           y = null
         }
       } while (x == null && y == null)
-      const colonist = new Colonist(this.storeRefs.game.value.currentScene!, x || 0, y || 0)
+      const colonist = new Colonist(
+        this.generateColonistId(),
+        this.storeRefs.game.value.currentScene!,
+        x || 0,
+        y || 0
+      )
       this.gameStoreRepo.addColonist(colonist)
     }
   }
 
-  // startJobProcessing() {
-  //   const { storeUpdateColonist } = this.store
-
-  //   this.jobsInterval = setInterval(() => {
-  //     if (this.jobs.length > 0) {
-  //       this.jobs.forEach((job) => {
-  //         if (!job.inProgress) {
-  //           const colonist = this.getClosestColonist(job.location)
-  //           if (!colonist) {
-  //             console.log('No colonist available for the job')
-  //             return
-  //           }
-  //           storeUpdateColonist(colonist)
-  //           job.inProgress = true
-  //           this.performJob(job, colonist)
-  //           colonist.occupied = false
-  //           storeUpdateColonist(colonist)
-
-  //           return
-  //         }
-  //       })
-  //     }
-  //   }, 1000)
-  // }
-
-  // // store gets out of sync with these colonists
-  // performJob(job: Job, colonist: Colonist) {
-  //   colonist.moveColonistTo(job.location, () => {
-  //     // simulate job
-  //     setTimeout(() => {
-  //       console.log('Job completed')
-  //       this.jobs.shift()
-  //       eventBus.value.emit('resource-harvested', { resourceId: job.resourceId })
-  //     }, 2000) // Time taken to complete the job
-  //   })
-  // }
-
-  // getClosestColonist(location: number[]): Colonist | null {
-  //   let closestColonist: Colonist | null = null
-  //   let shortestDistance = Infinity
-
-  //   for (const colonist of this.storeRefs.game.value.colonists) {
-  //     const distance = Phaser.Math.Distance.Between(
-  //       colonist.x,
-  //       colonist.y,
-  //       location[0],
-  //       location[1]
-  //     )
-
-  //     if (distance < shortestDistance && !colonist.occupied) {
-  //       shortestDistance = distance
-  //       colonist.occupied = true
-  //       closestColonist = colonist
-  //     }
-  //   }
-
-  //   return closestColonist
-  // }
-
-  update(delta: number) {
-    this.colonists.forEach((colonist) => {
-      colonist.update(delta)
-
-      if (!colonist.occupied && !colonist.currentJob) {
-        const job = this.jobService.assignJob(colonist.id)
-        if (job) {
-          colonist.assignJob(job)
-        }
-      }
-
-      if (colonist.currentJob && colonist.currentJob.isCompleted) {
-        this.jobService.completeJob(colonist.currentJob.id)
-        colonist.completeJob()
-      }
-    })
+  private generateColonistId(): string {
+    return 'id' + Math.random().toString(16).slice(2)
   }
 
   getState(): any {
@@ -187,9 +141,5 @@ export class ColonistService implements ColonistServiceI {
       frameRate: 10,
       repeat: -1
     })
-  }
-
-  destroy(): void {
-    clearInterval(this.jobsInterval!)
   }
 }

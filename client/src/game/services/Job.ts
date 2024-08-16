@@ -5,13 +5,18 @@ export interface JobServiceI {
   createJob(type: JobType, x: number, y: number, resourceType: string, jobYield: number): Job
   assignJob(colonistId: string): Job | null
   completeJob(jobId: string): void
-  update(delta: number)
+  update(delta: number): void
+  getState(): any
 }
 
-class JobService implements JobServiceI {
+export class JobService implements JobServiceI {
   private jobs: Job[] = []
 
   constructor(private gameStoreRepo: GameStoreRepoI) {}
+
+  update(delta: number) {
+    this.jobs = this.jobs.filter((job) => !job.isCompleted)
+  }
 
   createJob(type: JobType, x: number, y: number, resourceType: string, jobYield: number): Job {
     const job = new Job(
@@ -43,13 +48,14 @@ class JobService implements JobServiceI {
     }
   }
 
-  update(delta: number) {
-    this.jobs = this.jobs.filter((job) => !job.isCompleted)
+  getState(): any {
+    return {
+      jobs: this.jobs.map((job) => job.getState())
+    }
   }
 
   private generateJobId(): string {
-    // Implement a unique ID generation method
-    return Math.random().toString(36).substr(2, 9)
+    return 'id' + Math.random().toString(16).slice(2)
   }
 
   private getJobDuration(type: JobType): number {

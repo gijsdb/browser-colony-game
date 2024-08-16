@@ -1,6 +1,7 @@
 import { GameStoreType, useGameStore } from '../../stores/Game'
+import MapScene from '../scenes/MapScene'
 import { generateColonistName } from '../util'
-import Job from './Job'
+import { Job } from './Job'
 
 type ColonistBody = {
   headLeft: Phaser.GameObjects.Sprite
@@ -12,8 +13,8 @@ type ColonistBody = {
 }
 
 export default class Colonist {
-  public id?: number
-  private scene: Phaser.Scene
+  public id: string
+  private scene: MapScene
   public x: number
   public y: number
   private name: string
@@ -27,7 +28,8 @@ export default class Colonist {
   public currentJob: Job | null = null
   private store: GameStoreType
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
+  constructor(id: string, scene: MapScene, x: number, y: number) {
+    this.id = id
     this.store = useGameStore()
     this.name = generateColonistName()
     this.scene = scene
@@ -159,12 +161,10 @@ export default class Colonist {
   }
 
   private updateAnimation(velocityX: number, velocityY: number) {
-    if (Math.abs(velocityX) > Math.abs(velocityY)) {
-      this.container.play(velocityX > 0 ? 'colonist_walk_right' : 'colonist_walk_left', true)
-    } else if (velocityY !== 0) {
-      this.container.play(velocityY > 0 ? 'colonist_walk_down' : 'colonist_walk_up', true)
+    if (velocityX === 0 && velocityY === 0) {
+      this.stopWalkAnimation()
     } else {
-      this.container.play('colonist_idle', true)
+      this.playWalkAnimation()
     }
   }
 
