@@ -4,6 +4,8 @@ import Resource from '../game/entities/resources/Resource'
 import Colonist from '../game/entities/Colonist'
 import { Terrain } from '../game/mapgen/TerrainGenerator'
 import Tree from '../game/entities/resources/Tree'
+import { Job } from '../game/entities/Job'
+import MapScene from '../game/scenes/MapScene'
 
 export type GameStoreType = ReturnType<typeof useGameStore>
 export type GameStoreRefsType = ToRefs<GameState>
@@ -18,6 +20,7 @@ export type Inventory = {
 
 export type GameState = {
   game: {
+    jobs: Job[]
     resources: Resource[]
     colonists: Colonist[]
     map: {
@@ -27,7 +30,7 @@ export type GameState = {
       mapHeightTiles: number
       terrainLayout: Terrain
     }
-    currentScene: Phaser.Scene | undefined
+    currentScene: MapScene | undefined
     inventory: Inventory
   }
 }
@@ -36,6 +39,7 @@ export const useGameStore = defineStore('GameStore', {
   state: (): GameState => {
     return {
       game: {
+        jobs: [],
         resources: [],
         colonists: [],
         map: {
@@ -62,39 +66,48 @@ export const useGameStore = defineStore('GameStore', {
     storeSetTerrainLayout(terrain: Terrain) {
       this.game.map.terrainLayout = terrain
     },
-    storeSetCurrentScene(scene: Phaser.Scene) {
+    storeSetCurrentScene(scene: MapScene) {
       this.game.currentScene = scene
     },
     storeAddResource(resource: Resource) {
       resource.id = this.game.resources.length
       this.game.resources.push(resource)
     },
-    storeAddColonist(colonist: Colonist) {
+    storeAddColonist(colonist: Colonist): Colonist {
       this.game.colonists.push(colonist)
+      return colonist
     },
-    storeSetResourceToHarvest(tileX: number, tileY: number): GameStoreJob | null {
+    storeUpdateColonist(colonistToUpdate: Colonist) {
+      this.game.colonists.forEach((colonist) => {
+        if (colonist.id === colonistToUpdate.id) {
+          colonist = colonistToUpdate
+        }
+      })
+    },
+    storeSetJobs(jobs: Job[]) {
+      this.game.jobs = jobs
+    },
+    storeSetResourceToHarvest(tileX: number, tileY: number): Resource | null {
       for (const resource of this.game.resources) {
         if (resource.x === tileX && resource.y === tileY) {
           if (!resource.toHarvest) {
             resource.toHarvest = true
-            return {
-              location: [tileX, tileY],
-              resourceId: resource.id!
-            }
+            return resource
           }
           break
         }
       }
       return null
     },
-    storeAddResourceToInventory(resource: Resource, value: number) {
-      switch (true) {
-        case resource instanceof Tree:
-          this.game.inventory.wood = this.game.inventory.wood + value
+    storeAddResourceToInventory(type: string, typeValue: number) {
+      // temp
+      if (type === 'wood') {
+        this.game.inventory.wood = this.game.inventory.wood + typeValue
       }
     },
     storeReset() {
       this.game = {
+        jobs: [],
         resources: [],
         colonists: [],
         map: {

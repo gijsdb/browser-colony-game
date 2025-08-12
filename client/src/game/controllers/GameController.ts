@@ -5,6 +5,8 @@ import UIController from './UIController'
 import { GameStoreType, useGameStore } from '../../stores/Game'
 import { ColonistService, ColonistServiceI } from '../services/Colonist'
 import { ResourceServiceI, ResourceService } from '../services/Resource'
+import { GameStoreRepo, GameStoreRepoI } from '../../repositories/GameStoreRepo'
+import { JobServiceI, JobService } from '../services/Job'
 
 export default class GameController {
   private game: Phaser.Game | null
@@ -12,15 +14,18 @@ export default class GameController {
   private store: GameStoreType
   private colonistService: ColonistServiceI
   private resourceService: ResourceServiceI
+  private jobService: JobServiceI
+  private gameStoreRepo: GameStoreRepoI
   private uiController?: UIController
 
   constructor(colonistAmount: number) {
     this.store = useGameStore()
     const { storeSetTerrainLayout, storeSetCurrentScene } = this.store
-
+    this.gameStoreRepo = new GameStoreRepo()
     this.terrainGenerator = new TerrainGenerator()
-    this.colonistService = new ColonistService(colonistAmount)
-    this.resourceService = new ResourceService()
+    this.jobService = new JobService(this.gameStoreRepo)
+    this.colonistService = new ColonistService(colonistAmount, this.gameStoreRepo, this.jobService)
+    this.resourceService = new ResourceService(this.gameStoreRepo)
 
     const config = {
       type: Phaser.AUTO,
@@ -37,7 +42,8 @@ export default class GameController {
         preBoot: (game: Phaser.Game) => {
           game.scene.add('MapScene', MapScene, true, {
             colonistService: this.colonistService,
-            resourceService: this.resourceService
+            resourceService: this.resourceService,
+            jobService: this.jobService
           })
 
           let terrain = this.terrainGenerator.generateTerrainPerlinNoise(
@@ -54,7 +60,11 @@ export default class GameController {
         postBoot: (game: Phaser.Game) => {
           const scene = game.scene.getScene('MapScene')
           storeSetCurrentScene(scene)
-          this.uiController = new UIController()
+          this.uiController = new UIController(
+            this.colonistService,
+            this.resourceService,
+            this.jobService
+          )
           this.uiController.setUpInputHandlers()
         }
       }
@@ -68,7 +78,6 @@ export default class GameController {
 
     this.game!.destroy(true)
     this.game = null
-    this.colonistService.destroy()
     storeReset()
   }
 }

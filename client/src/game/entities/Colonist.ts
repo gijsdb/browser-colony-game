@@ -1,5 +1,8 @@
+import { isThisTypeNode } from 'typescript'
 import { GameStoreType, useGameStore } from '../../stores/Game'
+import MapScene from '../scenes/MapScene'
 import { generateColonistName } from '../util'
+import { Job } from './Job'
 
 type ColonistBody = {
   headLeft: Phaser.GameObjects.Sprite
@@ -11,25 +14,30 @@ type ColonistBody = {
 }
 
 export default class Colonist {
-  private scene: Phaser.Scene
+  public id: string
+  private scene: MapScene
   public x: number
   public y: number
   private name: string
   private body: ColonistBody
   private walkingSpeed: number
-  public occupied: boolean
+  public occupied: boolean = false
   private nameTag: Phaser.GameObjects.Text
   private container: Phaser.GameObjects.Container
+  private currentPath: Phaser.Math.Vector2[] | null = null
+  private currentPathIndex: number = 0
+  public currentJob: Job | null = null
   private store: GameStoreType
+  private pathGraphics: Phaser.GameObjects.Graphics | null = null
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
+  constructor(id: string, scene: MapScene, x: number, y: number) {
+    this.id = id
     this.store = useGameStore()
     this.name = generateColonistName()
     this.scene = scene
-    this.x = x
-    this.y = y
+    this.x = x * this.store.game.map.tileSize
+    this.y = y * this.store.game.map.tileSize
     this.walkingSpeed = 100
-    this.occupied = false
 
     this.body = {
       headLeft: this.scene.add.sprite(0, 0, 'colonist', 0),
@@ -45,19 +53,15 @@ export default class Colonist {
       strokeThickness: 0.5
     })
 
-    this.container = this.scene.add.container(
-      this.x * this.store.game.map.tileSize,
-      this.y * this.store.game.map.tileSize,
-      [
-        this.body.headLeft,
-        this.body.headRight,
-        this.body.bodyLeft,
-        this.body.bodyRight,
-        this.body.legsLeft,
-        this.body.legsRight,
-        this.nameTag
-      ]
-    )
+    this.container = this.scene.add.container(this.x, this.y, [
+      this.body.headLeft,
+      this.body.headRight,
+      this.body.bodyLeft,
+      this.body.bodyRight,
+      this.body.legsLeft,
+      this.body.legsRight,
+      this.nameTag
+    ])
   }
 
   playWalkAnimation() {
@@ -78,37 +82,177 @@ export default class Colonist {
     this.body.legsRight.stop()
   }
 
-  moveColonistTo(targetLocation: number[], onArrival: () => void) {
-    let targetX = this.store.game.map.tileMap?.tileToWorldX(targetLocation[0])
-    let targetY = this.store.game.map.tileMap?.tileToWorldY(targetLocation[1])
-
-    if (!targetX || !targetY) {
-      throw Error('Failed parsing target for colonist move')
+  update(delta: number) {
+    if (this.currentJob && !this.occupied) {
+      this.startJobMovement()
     }
 
-    const distance = Phaser.Math.Distance.Between(
-      this.x * this.store.game.map.tileSize,
-      this.y * this.store.game.map.tileSize,
-      targetX,
-      targetY
-    )
-
-    const duration = (distance / this.walkingSpeed) * 1000
-
-    this.playWalkAnimation()
-
-    this.scene.tweens.add({
-      targets: this.container,
-      x: targetX,
-      y: targetY,
-      duration: duration,
-      onComplete: () => {
-        this.stopWalkAnimation()
-
-        this.x = targetX
-        this.y = targetY
-        onArrival()
-      }
-    })
+    if (this.currentPath) {
+      this.moveAlongPath(delta)
+    } else if (this.currentJob && this.isAtJobLocation()) {
+      this.performJob(delta)
+    } else {
+      this.idle()
+    }
   }
+
+  private startJobMovement() {
+    if (this.currentJob) {
+      const startX = Math.floor(this.x / this.store.game.map.tileSize)
+      const startY = Math.floor(this.y / this.store.game.map.tileSize)
+      const endX = this.currentJob.x
+      const endY = this.currentJob.y
+      console.log('Pathfinding from', startX, startY, 'to', endX, endY)
+      this.scene.pathfinder.findPath(startX, startY, endX, endY, (path) => {
+        if (path === null) {
+          console.log('Path was not found.')
+        } else {
+          this.currentPath = path.map(
+            (point) =>
+              new Phaser.Math.Vector2(
+                point.x * this.store.game.map.tileSize,
+                point.y * this.store.game.map.tileSize
+              )
+          )
+          this.currentPathIndex = 0
+          this.occupied = true
+          this.drawPathIndicator()
+        }
+      })
+      this.scene.pathfinder.calculate()
+    }
+  }
+
+  // For debugging purposes, draw the path on the map
+  private drawPathIndicator() {
+    // Remove previous graphics if any
+    if (this.pathGraphics) {
+      this.pathGraphics.destroy()
+    }
+    this.pathGraphics = this.scene.add.graphics()
+    this.pathGraphics.lineStyle(2, 0x00ff00, 0.7) // Green, semi-transparent
+
+    if (this.currentPath && this.currentPath.length > 1) {
+      for (let i = 0; i < this.currentPath.length - 1; i++) {
+        const from = this.currentPath[i]
+        const to = this.currentPath[i + 1]
+        this.pathGraphics.strokeLineShape(new Phaser.Geom.Line(from.x, from.y, to.x, to.y))
+      }
+    }
+  }
+
+  private moveAlongPath(delta: number) {
+    if (!this.currentPath || this.currentPathIndex >= this.currentPath.length) {
+      this.currentPath = null
+      return
+    }
+
+    const targetPoint = this.currentPath[this.currentPathIndex]
+    const distance = Phaser.Math.Distance.Between(this.x, this.y, targetPoint.x, targetPoint.y)
+    console.log(`Colonist ${this.id} moving to`, targetPoint, 'distance:', distance)
+
+    if (distance < 1) {
+      this.currentPathIndex++
+      if (this.currentPathIndex >= this.currentPath.length) {
+        this.currentPath = null
+        return
+      }
+    }
+
+    const angle = Phaser.Math.Angle.Between(this.x, this.y, targetPoint.x, targetPoint.y)
+    const velocityX = Math.cos(angle) * this.walkingSpeed * (delta / 1000)
+    const velocityY = Math.sin(angle) * this.walkingSpeed * (delta / 1000)
+
+    this.x += velocityX
+    this.y += velocityY
+    this.container.setPosition(this.x, this.y)
+
+    this.updateAnimation(velocityX, velocityY)
+    this.playWalkAnimation()
+  }
+
+  private performJob(delta: number) {
+    if (this.currentJob) {
+      this.currentJob.progress += delta
+      if (this.currentJob.progress >= this.currentJob.duration) {
+        this.completeJob()
+      }
+    }
+  }
+
+  private isAtJobLocation(): boolean {
+    return (
+      this.currentJob! &&
+      Math.abs(this.x - this.currentJob.x) < 1 &&
+      Math.abs(this.y - this.currentJob.y) < 1
+    )
+  }
+
+  private idle() {
+    // Implement idle behavior if needed
+    this.stopWalkAnimation()
+  }
+
+  private updateAnimation(velocityX: number, velocityY: number) {
+    if (velocityX === 0 && velocityY === 0) {
+      this.stopWalkAnimation()
+    } else {
+      this.playWalkAnimation()
+    }
+  }
+
+  assignJob(job: Job) {
+    this.currentJob = job
+    this.occupied = false
+  }
+
+  completeJob() {
+    // Notify job completion (you might want to emit an event here)
+    this.currentJob = null
+    this.occupied = false
+  }
+
+  getState() {
+    return {
+      x: this.x,
+      y: this.y,
+      occupied: this.occupied,
+      hasJob: !!this.currentJob,
+      jobProgress: this.currentJob ? this.currentJob.progress : 0
+    }
+  }
+
+  // moveColonistTo(targetLocation: number[], onArrival: () => void) {
+  //   let targetX = this.store.game.map.tileMap?.tileToWorldX(targetLocation[0])
+  //   let targetY = this.store.game.map.tileMap?.tileToWorldY(targetLocation[1])
+
+  //   if (!targetX || !targetY) {
+  //     throw Error('Failed parsing target for colonist move')
+  //   }
+
+  //   const distance = Phaser.Math.Distance.Between(
+  //     this.x * this.store.game.map.tileSize,
+  //     this.y * this.store.game.map.tileSize,
+  //     targetX,
+  //     targetY
+  //   )
+
+  //   const duration = this.walkingSpeed
+
+  //   this.playWalkAnimation()
+
+  //   this.scene.tweens.add({
+  //     targets: this.container,
+  //     x: targetX,
+  //     y: targetY,
+  //     duration: duration,
+  //     onComplete: () => {
+  //       this.stopWalkAnimation()
+
+  //       this.x = targetX
+  //       this.y = targetY
+  //       onArrival()
+  //     }
+  //   })
+  // }
 }

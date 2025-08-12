@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import * as EasyStar from 'easystarjs'
 import tiles from '../../assets/tilesets/forest_tiles_fixed.png'
 import colonist_img from '../../assets/characters/colonist.png'
 import { TILE_VARIANTS } from '../mapgen/TileVariants'
@@ -7,16 +8,24 @@ import { isTileIdInObject } from '../util'
 import { GameStoreType, useGameStore } from '../../stores/Game'
 import { ColonistServiceI } from '../services/Colonist'
 import { ResourceServiceI } from '../services/Resource'
+import { JobServiceI } from '../services/Job'
 
 class MapScene extends Phaser.Scene {
+  pathfinder: EasyStar.js
+  private pathfinderGrid: number[][]
   private colonistService?: ColonistServiceI
   private resourceService?: ResourceServiceI
+  private jobService?: JobServiceI
   private cameraController?: CameraController
   private butterflies: Phaser.GameObjects.Group | undefined
   private store: GameStoreType
 
   constructor() {
     super({ key: 'MapScene' })
+    this.pathfinder = new EasyStar.js()
+    this.pathfinderGrid = []
+    this.pathfinder.setAcceptableTiles([0])
+    this.pathfinder.enableDiagonals()
     this.store = useGameStore()
     this.butterflies = undefined
   }
@@ -43,6 +52,7 @@ class MapScene extends Phaser.Scene {
 
     this.colonistService = data.colonistService
     this.resourceService = data.resourceService
+    this.jobService = data.jobService
     this.cameraController = new CameraController(this)
 
     if (!this.colonistService || !this.resourceService) {
@@ -101,6 +111,7 @@ class MapScene extends Phaser.Scene {
 
   renderMap(): void {
     for (let y = 0; y < this.store.game.map.mapHeightTiles; y++) {
+      this.pathfinderGrid[y] = []
       for (let x = 0; x < this.store.game.map.mapWidthTiles; x++) {
         const tileId = this.store.game.map.terrainLayout![y][x]
         let ground_layer = this.store.game.map.tileMap!.getLayer('Ground')
@@ -111,6 +122,7 @@ class MapScene extends Phaser.Scene {
             `Could not render map! ground layer: ${ground_layer} resource layer: ${resource_layer} decoration layer: ${decoration_layer}`
           )
         }
+        let isWalkable = true
         if (isTileIdInObject(tileId, TILE_VARIANTS.GROUND_LAYER)) {
           this.store.game.map.tileMap!.putTileAt(tileId, x, y, false, 'Ground')
         } else if (isTileIdInObject(tileId, TILE_VARIANTS.RESOURCE_LAYER)) {
@@ -122,6 +134,7 @@ class MapScene extends Phaser.Scene {
             'Ground'
           )
           this.store.game.map.tileMap!.putTileAt(tileId, x, y, false, 'Resource')
+          isWalkable = true
         } else if (isTileIdInObject(tileId, TILE_VARIANTS.DECORATION_LAYER)) {
           this.store.game.map.tileMap!.putTileAt(
             TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX,
@@ -131,13 +144,24 @@ class MapScene extends Phaser.Scene {
             'Ground'
           )
           this.store.game.map.tileMap!.putTileAt(tileId, x, y, false, 'Decoration')
+          isWalkable = true
         }
+        this.pathfinderGrid[y][x] = isWalkable ? 0 : 1
       }
     }
+    this.pathfinder.setGrid(this.pathfinderGrid)
   }
 
-  update() {
+  update(time: number, delta: number) {
     this.cameraController?.update()
+    this.colonistService?.update(delta)
+    this.jobService?.update(delta)
+    // this.resourceService?.update(delta)
+    // this.gameStoreRepo.syncState(
+    //   this.colonistService?.getState(),
+    //   this.resourceService.getState(),
+    //   this.jobService?.getState()
+    // )
   }
 
   // moved here butterfly stuff here for now

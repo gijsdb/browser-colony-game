@@ -2,6 +2,9 @@ import { eventBus } from '../../eventBus'
 import { GameStoreRefsType, GameStoreType, useGameStore } from '../../stores/Game'
 import { storeToRefs } from 'pinia'
 import { TILE_VARIANTS } from '../mapgen/TileVariants'
+import { ColonistServiceI } from '../services/Colonist'
+import { ResourceServiceI } from '../services/Resource'
+import { JobServiceI } from '../services/Job'
 
 type ClickMode = 'normal' | 'harvestWood'
 
@@ -10,8 +13,15 @@ export default class UIController {
   private store: GameStoreType
   private storeRefs: GameStoreRefsType
   private clickMode: ClickMode
+  private colonistService: ColonistServiceI
+  private resourceService: ResourceServiceI
+  private jobService: JobServiceI
 
-  constructor() {
+  constructor(
+    colonistService: ColonistServiceI,
+    resourceService: ResourceServiceI,
+    jobService: JobServiceI
+  ) {
     this.store = useGameStore()
     this.storeRefs = storeToRefs(this.store)
     this.tileBorderGraphics = null
@@ -19,6 +29,9 @@ export default class UIController {
     this.storeRefs.game.value.currentScene!.input.setDefaultCursor(
       'url(./src/assets/cursors/pointer.svg), pointer'
     )
+    this.colonistService = colonistService
+    this.resourceService = resourceService
+    this.jobService = jobService
     this.listen()
   }
 
@@ -51,47 +64,52 @@ export default class UIController {
   }
 
   setUpInputHandlers() {
-    this.storeRefs.game.value.currentScene!.input.on('pointermove', (pointer: any) => {
-      const tileX = this.store.game.map.tileMap?.worldToTileX(
-        pointer.worldX,
-        true,
-        this.storeRefs.game.value.currentScene!.cameras.main,
-        'Ground'
-      )
-      const tileY = this.store.game.map.tileMap?.worldToTileY(
-        pointer.worldY,
-        true,
-        this.storeRefs.game.value.currentScene!.cameras.main,
-        'Ground'
-      )
+    this.storeRefs.game.value.currentScene!.input.on(
+      'pointermove',
+      (pointer: Phaser.Input.Pointer) => {
+        const tileX = this.store.game.map.tileMap?.worldToTileX(
+          pointer.worldX,
+          true,
+          this.storeRefs.game.value.currentScene!.cameras.main,
+          'Ground'
+        )
+        const tileY = this.store.game.map.tileMap?.worldToTileY(
+          pointer.worldY,
+          true,
+          this.storeRefs.game.value.currentScene!.cameras.main,
+          'Ground'
+        )
 
-      this.handleTileHoverInfo(tileX!, tileY!)
-    })
-
-    this.storeRefs.game.value.currentScene!.input.on('pointerdown', (pointer: any) => {
-      const tileX = this.store.game.map.tileMap?.worldToTileX(
-        pointer.worldX,
-        true,
-        this.storeRefs.game.value.currentScene!.cameras.main,
-        'Ground'
-      )
-      const tileY = this.store.game.map.tileMap?.worldToTileY(
-        pointer.worldY,
-        true,
-        this.storeRefs.game.value.currentScene!.cameras.main,
-        'Ground'
-      )
-
-      if (!tileX || !tileY) {
-        return
+        this.handleTileHoverInfo(tileX!, tileY!)
       }
+    )
 
-      this.handleTileClick(tileX, tileY)
-    })
+    this.storeRefs.game.value.currentScene!.input.on(
+      'pointerdown',
+      (pointer: Phaser.Input.Pointer) => {
+        const tileX = this.store.game.map.tileMap?.worldToTileX(
+          pointer.worldX,
+          true,
+          this.storeRefs.game.value.currentScene!.cameras.main,
+          'Ground'
+        )
+        const tileY = this.store.game.map.tileMap?.worldToTileY(
+          pointer.worldY,
+          true,
+          this.storeRefs.game.value.currentScene!.cameras.main,
+          'Ground'
+        )
+
+        if (!tileX || !tileY) {
+          return
+        }
+
+        this.handleTileClick(tileX, tileY)
+      }
+    )
   }
 
   handleTileClick(tileX: number, tileY: number) {
-    const { storeSetResourceToHarvest } = this.store
     let tileClicked = this.storeRefs.game.value.map.terrainLayout[tileY][tileX]
     switch (this.clickMode) {
       case 'harvestWood':
@@ -99,10 +117,7 @@ export default class UIController {
           tileClicked === TILE_VARIANTS.RESOURCE_LAYER.TREE_TOP.TILE_MAP_INDEX ||
           tileClicked === TILE_VARIANTS.RESOURCE_LAYER.TREE_TRUNK.TILE_MAP_INDEX
         ) {
-          let gameStoreJob = storeSetResourceToHarvest(tileX, tileY)
-          if (gameStoreJob) {
-            eventBus.value.emit('resource-marked-for-harvest', gameStoreJob)
-          }
+          let job = this.jobService.createJob('harvest', tileX, tileY, 'wood', 30)
         }
       default:
         console.log(`Clicked on tile: x=${tileX}, y=${tileY}`)
@@ -153,6 +168,7 @@ export default class UIController {
       this.tileBorderGraphics!.clear()
       this.tileBorderGraphics!.lineStyle(2, 0x00ff00, 1)
       this.tileBorderGraphics!.strokeRect(tileX * 32, tileY * 32, 32, 32)
+      this.tileBorderGraphics!.setDepth(1000)
     } else {
       this.tileBorderGraphics!.clear()
     }
