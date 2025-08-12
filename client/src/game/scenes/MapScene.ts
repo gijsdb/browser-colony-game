@@ -24,7 +24,6 @@ class MapScene extends Phaser.Scene {
     super({ key: 'MapScene' })
     this.pathfinder = new EasyStar.js()
     this.pathfinderGrid = []
-    this.pathfinder.setGrid(this.pathfinderGrid)
     this.pathfinder.setAcceptableTiles([0])
     this.pathfinder.enableDiagonals()
     this.store = useGameStore()
@@ -135,7 +134,7 @@ class MapScene extends Phaser.Scene {
             'Ground'
           )
           this.store.game.map.tileMap!.putTileAt(tileId, x, y, false, 'Resource')
-          isWalkable = false
+          isWalkable = true
         } else if (isTileIdInObject(tileId, TILE_VARIANTS.DECORATION_LAYER)) {
           this.store.game.map.tileMap!.putTileAt(
             TILE_VARIANTS.GROUND_LAYER.GRASS.TILE_MAP_INDEX,
@@ -150,6 +149,7 @@ class MapScene extends Phaser.Scene {
         this.pathfinderGrid[y][x] = isWalkable ? 0 : 1
       }
     }
+    this.pathfinder.setGrid(this.pathfinderGrid)
   }
 
   update(time: number, delta: number) {

@@ -1,3 +1,4 @@
+import { isThisTypeNode } from 'typescript'
 import { GameStoreType, useGameStore } from '../../stores/Game'
 import MapScene from '../scenes/MapScene'
 import { generateColonistName } from '../util'
@@ -27,15 +28,16 @@ export default class Colonist {
   private currentPathIndex: number = 0
   public currentJob: Job | null = null
   private store: GameStoreType
+  private pathGraphics: Phaser.GameObjects.Graphics | null = null
 
   constructor(id: string, scene: MapScene, x: number, y: number) {
     this.id = id
     this.store = useGameStore()
     this.name = generateColonistName()
     this.scene = scene
-    this.x = x
-    this.y = y
-    this.walkingSpeed = 5000
+    this.x = x * this.store.game.map.tileSize
+    this.y = y * this.store.game.map.tileSize
+    this.walkingSpeed = 100
 
     this.body = {
       headLeft: this.scene.add.sprite(0, 0, 'colonist', 0),
@@ -51,19 +53,15 @@ export default class Colonist {
       strokeThickness: 0.5
     })
 
-    this.container = this.scene.add.container(
-      this.x * this.store.game.map.tileSize,
-      this.y * this.store.game.map.tileSize,
-      [
-        this.body.headLeft,
-        this.body.headRight,
-        this.body.bodyLeft,
-        this.body.bodyRight,
-        this.body.legsLeft,
-        this.body.legsRight,
-        this.nameTag
-      ]
-    )
+    this.container = this.scene.add.container(this.x, this.y, [
+      this.body.headLeft,
+      this.body.headRight,
+      this.body.bodyLeft,
+      this.body.bodyRight,
+      this.body.legsLeft,
+      this.body.legsRight,
+      this.nameTag
+    ])
   }
 
   playWalkAnimation() {
@@ -100,13 +98,46 @@ export default class Colonist {
 
   private startJobMovement() {
     if (this.currentJob) {
-      const jobLocation = new Phaser.Math.Vector2(this.currentJob.x, this.currentJob.y)
-      this.currentPath = this.scene.pathfinder.findPath(
-        new Phaser.Math.Vector2(this.x, this.y),
-        jobLocation
-      )
-      this.currentPathIndex = 0
-      this.occupied = true
+      const startX = Math.floor(this.x / this.store.game.map.tileSize)
+      const startY = Math.floor(this.y / this.store.game.map.tileSize)
+      const endX = this.currentJob.x
+      const endY = this.currentJob.y
+      console.log('Pathfinding from', startX, startY, 'to', endX, endY)
+      this.scene.pathfinder.findPath(startX, startY, endX, endY, (path) => {
+        if (path === null) {
+          console.log('Path was not found.')
+        } else {
+          this.currentPath = path.map(
+            (point) =>
+              new Phaser.Math.Vector2(
+                point.x * this.store.game.map.tileSize,
+                point.y * this.store.game.map.tileSize
+              )
+          )
+          this.currentPathIndex = 0
+          this.occupied = true
+          this.drawPathIndicator()
+        }
+      })
+      this.scene.pathfinder.calculate()
+    }
+  }
+
+  // For debugging purposes, draw the path on the map
+  private drawPathIndicator() {
+    // Remove previous graphics if any
+    if (this.pathGraphics) {
+      this.pathGraphics.destroy()
+    }
+    this.pathGraphics = this.scene.add.graphics()
+    this.pathGraphics.lineStyle(2, 0x00ff00, 0.7) // Green, semi-transparent
+
+    if (this.currentPath && this.currentPath.length > 1) {
+      for (let i = 0; i < this.currentPath.length - 1; i++) {
+        const from = this.currentPath[i]
+        const to = this.currentPath[i + 1]
+        this.pathGraphics.strokeLineShape(new Phaser.Geom.Line(from.x, from.y, to.x, to.y))
+      }
     }
   }
 
@@ -118,6 +149,7 @@ export default class Colonist {
 
     const targetPoint = this.currentPath[this.currentPathIndex]
     const distance = Phaser.Math.Distance.Between(this.x, this.y, targetPoint.x, targetPoint.y)
+    console.log(`Colonist ${this.id} moving to`, targetPoint, 'distance:', distance)
 
     if (distance < 1) {
       this.currentPathIndex++
@@ -136,6 +168,7 @@ export default class Colonist {
     this.container.setPosition(this.x, this.y)
 
     this.updateAnimation(velocityX, velocityY)
+    this.playWalkAnimation()
   }
 
   private performJob(delta: number) {
@@ -170,7 +203,7 @@ export default class Colonist {
 
   assignJob(job: Job) {
     this.currentJob = job
-    this.occupied = false // This will trigger movement to job location on next update
+    this.occupied = false
   }
 
   completeJob() {

@@ -78,6 +78,7 @@ export class ColonistService implements ColonistServiceI {
         x || 0,
         y || 0
       )
+      this.colonists.push(colonist)
       this.gameStoreRepo.addColonist(colonist)
     }
   }

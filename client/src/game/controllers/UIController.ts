@@ -64,43 +64,49 @@ export default class UIController {
   }
 
   setUpInputHandlers() {
-    this.storeRefs.game.value.currentScene!.input.on('pointermove', (pointer: any) => {
-      const tileX = this.store.game.map.tileMap?.worldToTileX(
-        pointer.worldX,
-        true,
-        this.storeRefs.game.value.currentScene!.cameras.main,
-        'Ground'
-      )
-      const tileY = this.store.game.map.tileMap?.worldToTileY(
-        pointer.worldY,
-        true,
-        this.storeRefs.game.value.currentScene!.cameras.main,
-        'Ground'
-      )
+    this.storeRefs.game.value.currentScene!.input.on(
+      'pointermove',
+      (pointer: Phaser.Input.Pointer) => {
+        const tileX = this.store.game.map.tileMap?.worldToTileX(
+          pointer.worldX,
+          true,
+          this.storeRefs.game.value.currentScene!.cameras.main,
+          'Ground'
+        )
+        const tileY = this.store.game.map.tileMap?.worldToTileY(
+          pointer.worldY,
+          true,
+          this.storeRefs.game.value.currentScene!.cameras.main,
+          'Ground'
+        )
 
-      this.handleTileHoverInfo(tileX!, tileY!)
-    })
-
-    this.storeRefs.game.value.currentScene!.input.on('pointerdown', (pointer: any) => {
-      const tileX = this.store.game.map.tileMap?.worldToTileX(
-        pointer.worldX,
-        true,
-        this.storeRefs.game.value.currentScene!.cameras.main,
-        'Ground'
-      )
-      const tileY = this.store.game.map.tileMap?.worldToTileY(
-        pointer.worldY,
-        true,
-        this.storeRefs.game.value.currentScene!.cameras.main,
-        'Ground'
-      )
-
-      if (!tileX || !tileY) {
-        return
+        this.handleTileHoverInfo(tileX!, tileY!)
       }
+    )
 
-      this.handleTileClick(tileX, tileY)
-    })
+    this.storeRefs.game.value.currentScene!.input.on(
+      'pointerdown',
+      (pointer: Phaser.Input.Pointer) => {
+        const tileX = this.store.game.map.tileMap?.worldToTileX(
+          pointer.worldX,
+          true,
+          this.storeRefs.game.value.currentScene!.cameras.main,
+          'Ground'
+        )
+        const tileY = this.store.game.map.tileMap?.worldToTileY(
+          pointer.worldY,
+          true,
+          this.storeRefs.game.value.currentScene!.cameras.main,
+          'Ground'
+        )
+
+        if (!tileX || !tileY) {
+          return
+        }
+
+        this.handleTileClick(tileX, tileY)
+      }
+    )
   }
 
   handleTileClick(tileX: number, tileY: number) {
@@ -162,6 +168,7 @@ export default class UIController {
       this.tileBorderGraphics!.clear()
       this.tileBorderGraphics!.lineStyle(2, 0x00ff00, 1)
       this.tileBorderGraphics!.strokeRect(tileX * 32, tileY * 32, 32, 32)
+      this.tileBorderGraphics!.setDepth(1000)
     } else {
       this.tileBorderGraphics!.clear()
     }
