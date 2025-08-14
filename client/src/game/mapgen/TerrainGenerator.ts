@@ -107,29 +107,30 @@ export class TerrainGenerator {
   smoothTerrain(terrain: Terrain, passes = 2): Terrain {
     const width = terrain[0].length
     const height = terrain.length
-    const smoothed = JSON.parse(JSON.stringify(terrain))
-
+    let smoothed = terrain.map((row) => [...row])
     for (let pass = 0; pass < passes; pass++) {
+      let newSmoothed = smoothed.map((row) => [...row])
       for (let y = 1; y < height - 1; y++) {
         for (let x = 1; x < width - 1; x++) {
           const neighbors = [
-            terrain[y - 1][x],
-            terrain[y + 1][x],
-            terrain[y][x - 1],
-            terrain[y][x + 1]
+            smoothed[y - 1][x],
+            smoothed[y + 1][x],
+            smoothed[y][x - 1],
+            smoothed[y][x + 1]
           ]
-          const mostCommon = neighbors
-            .sort(
-              (a, b) =>
-                neighbors.filter((v) => v === a).length - neighbors.filter((v) => v === b).length
-            )
-            .pop()
-          smoothed[y][x] = mostCommon
+          const mostCommon =
+            neighbors
+              .sort(
+                (a, b) =>
+                  neighbors.filter((v) => v === a).length - neighbors.filter((v) => v === b).length
+              )
+              .pop() ?? smoothed[y][x]
+          newSmoothed[y][x] = mostCommon
         }
       }
-      terrain = JSON.parse(JSON.stringify(smoothed))
+      smoothed = newSmoothed
     }
-    return terrain
+    return smoothed
   }
 
   removeSmallWaterBodies(terrain: Terrain, minSize: number): Terrain {

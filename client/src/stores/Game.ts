@@ -100,7 +100,7 @@ export const useGameStore = defineStore('GameStore', {
       return null
     },
     storeAddResourceToInventory(type: string, typeValue: number) {
-      // temp
+      console.log('Adding resource to inventory:', type, typeValue)
       if (type === 'wood') {
         this.game.inventory.wood = this.game.inventory.wood + typeValue
       }

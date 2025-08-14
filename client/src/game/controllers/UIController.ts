@@ -117,7 +117,7 @@ export default class UIController {
           tileClicked === TILE_VARIANTS.RESOURCE_LAYER.TREE_TOP.TILE_MAP_INDEX ||
           tileClicked === TILE_VARIANTS.RESOURCE_LAYER.TREE_TRUNK.TILE_MAP_INDEX
         ) {
-          let job = this.jobService.createJob('harvest', tileX, tileY, 'wood', 30)
+          let job = this.jobService.createJob('harvest', tileX, tileY, 30)
         }
       default:
         console.log(`Clicked on tile: x=${tileX}, y=${tileY}`)

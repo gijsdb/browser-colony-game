@@ -7,8 +7,9 @@ export default class Resource {
   public harvested: boolean
   public harvestTime: number
   public value: number
+  public name: string
 
-  constructor(tilesheetId: number[], x: number, y: number, value: number) {
+  constructor(tilesheetId: number[], x: number, y: number, value: number, name: string) {
     this.tilesheetId = tilesheetId
     this.toHarvest = false
     this.harvested = false
@@ -16,6 +17,7 @@ export default class Resource {
     this.x = x
     this.y = y
     this.value = value
+    this.name = name
   }
 
   harvest(): number {

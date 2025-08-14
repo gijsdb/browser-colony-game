@@ -1,5 +1,7 @@
 export type JobType = 'harvest' | 'build'
 
+// Could be split for different job types
+
 export class Job {
   constructor(
     public id: string,
@@ -7,7 +9,7 @@ export class Job {
     public x: number,
     public y: number,
     public duration: number,
-    public resourceType: string,
+    public resourceID: number,
     public jobYield: number
   ) {}
 
@@ -25,7 +27,7 @@ export class Job {
       duration: this.duration,
       assignedColonist: this.assignedColonist,
       isCompleted: this.isCompleted,
-      resourceType: this.resourceType,
+      resourceID: this.resourceID,
       jobYield: this.jobYield
     }
   }

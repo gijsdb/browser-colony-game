@@ -49,7 +49,7 @@ export class ColonistService implements ColonistServiceI {
 
       if (colonist.currentJob && colonist.currentJob.isCompleted) {
         this.jobService.completeJob(colonist.currentJob.id)
-        colonist.completeJob()
+        colonist.clearJob()
       }
     })
   }

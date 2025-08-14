@@ -9,7 +9,9 @@ import { GameStoreRepoI } from '../../repositories/GameStoreRepo'
 
 export interface ResourceServiceI {
   spawnResources(): void
-  markResourceForHarvest(tileX: number, tileY: number): Resource | null
+  getResourceByXY(x: number, y: number): Resource | null
+  getResourceById(id: number): Resource | null
+  harvestResource(resourceToBeHarvested: Resource): void
 }
 
 export class ResourceService implements ResourceServiceI {
@@ -23,24 +25,32 @@ export class ResourceService implements ResourceServiceI {
     this.gameStoreRepo = gameStoreRepo
   }
 
+  // UNUSED.
   markResourceForHarvest(tileX: number, tileY: number): Resource | null {
     let resource = this.gameStoreRepo.markResourceForHarvest(tileX, tileY)
     return resource
   }
 
-  listenForHarvests() {
+  harvestResource(resourceToBeHarvested: Resource) {
     const { storeAddResourceToInventory } = this.store
-    eventBus.value.on('resource-harvested', (data) => {
-      const harvestedResourceId = data as { resourceId: number }
-      console.log(harvestedResourceId)
-      this.storeRefs.game.value.resources.map((resource) => {
-        if (resource.id === harvestedResourceId.resourceId) {
-          let value = resource.harvest()
-          this.removeHarvestedResourceFromTerrain(resource)
-          storeAddResourceToInventory(resource, value)
-        }
-      })
+
+    this.storeRefs.game.value.resources.map((resource) => {
+      if (resource.id === resourceToBeHarvested.id) {
+        let value = resource.harvest()
+        this.removeHarvestedResourceFromTerrain(resource)
+        storeAddResourceToInventory(resource.name, value)
+      }
     })
+  }
+
+  getResourceByXY(x: number, y: number): Resource | null {
+    const resources = this.storeRefs.game.value.resources
+    return resources.find((resource) => resource.x === x && resource.y === y) || null
+  }
+
+  getResourceById(id: number): Resource | null {
+    const resources = this.storeRefs.game.value.resources
+    return resources.find((resource) => resource.id === id) || null
   }
 
   //todo: if tree remove tree top tile also
@@ -84,7 +94,5 @@ export class ResourceService implements ResourceServiceI {
         }
       }
     }
-
-    this.listenForHarvests()
   }
 }

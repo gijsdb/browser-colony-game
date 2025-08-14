@@ -23,9 +23,9 @@ export default class GameController {
     const { storeSetTerrainLayout, storeSetCurrentScene } = this.store
     this.gameStoreRepo = new GameStoreRepo()
     this.terrainGenerator = new TerrainGenerator()
-    this.jobService = new JobService(this.gameStoreRepo)
-    this.colonistService = new ColonistService(colonistAmount, this.gameStoreRepo, this.jobService)
     this.resourceService = new ResourceService(this.gameStoreRepo)
+    this.jobService = new JobService(this.gameStoreRepo, this.resourceService)
+    this.colonistService = new ColonistService(colonistAmount, this.gameStoreRepo, this.jobService)
 
     const config = {
       type: Phaser.AUTO,
@@ -58,7 +58,7 @@ export default class GameController {
           storeSetTerrainLayout(terrain)
         },
         postBoot: (game: Phaser.Game) => {
-          const scene = game.scene.getScene('MapScene')
+          const scene = game.scene.getScene('MapScene') as MapScene
           storeSetCurrentScene(scene)
           this.uiController = new UIController(
             this.colonistService,

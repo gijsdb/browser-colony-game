@@ -3,6 +3,7 @@ import { GameStoreType, useGameStore } from '../../stores/Game'
 import MapScene from '../scenes/MapScene'
 import { generateColonistName } from '../util'
 import { Job } from './Job'
+import { eventBus } from 'src/eventBus'
 
 type ColonistBody = {
   headLeft: Phaser.GameObjects.Sprite
@@ -125,7 +126,6 @@ export default class Colonist {
 
   // For debugging purposes, draw the path on the map
   private drawPathIndicator() {
-    // Remove previous graphics if any
     if (this.pathGraphics) {
       this.pathGraphics.destroy()
     }
@@ -149,7 +149,6 @@ export default class Colonist {
 
     const targetPoint = this.currentPath[this.currentPathIndex]
     const distance = Phaser.Math.Distance.Between(this.x, this.y, targetPoint.x, targetPoint.y)
-    console.log(`Colonist ${this.id} moving to`, targetPoint, 'distance:', distance)
 
     if (distance < 1) {
       this.currentPathIndex++
@@ -168,7 +167,6 @@ export default class Colonist {
     this.container.setPosition(this.x, this.y)
 
     this.updateAnimation(velocityX, velocityY)
-    this.playWalkAnimation()
   }
 
   private performJob(delta: number) {
@@ -181,11 +179,10 @@ export default class Colonist {
   }
 
   private isAtJobLocation(): boolean {
-    return (
-      this.currentJob! &&
-      Math.abs(this.x - this.currentJob.x) < 1 &&
-      Math.abs(this.y - this.currentJob.y) < 1
-    )
+    if (!this.currentJob) return false
+    const jobWorldX = this.currentJob.x * this.store.game.map.tileSize
+    const jobWorldY = this.currentJob.y * this.store.game.map.tileSize
+    return Math.abs(this.x - jobWorldX) < 1 && Math.abs(this.y - jobWorldY) < 1
   }
 
   private idle() {
@@ -206,10 +203,22 @@ export default class Colonist {
     this.occupied = false
   }
 
+  // Mark the job as completed and set the colonist as unoccupied
+  // triggers the job completion logic in JobService
   completeJob() {
-    // Notify job completion (you might want to emit an event here)
+    this.currentJob!.isCompleted = true
+    this.occupied = false
+  }
+
+  clearJob() {
     this.currentJob = null
     this.occupied = false
+    if (this.pathGraphics) {
+      this.pathGraphics.destroy()
+      this.pathGraphics = null
+    }
+    this.currentPath = null
+    this.currentPathIndex = 0
   }
 
   getState() {

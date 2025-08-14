@@ -26,13 +26,6 @@ export class GameStoreRepo implements GameStoreRepoI {
     // Update colonist state
     storeUpdateColonist(colonistState.colonists)
     this.store.storeSetJobs(colonistState.jobs)
-
-    // Update resource state
-    // this.store.storeSetResources(resourceState.resources)
-    // this.store.storeSetInventory(resourceState.inventory)
-
-    // You might also want to update other game state here
-    // For example, map state, time, etc.
   }
 
   addColonist(colonist: Colonist): Colonist {
@@ -49,6 +42,7 @@ export class GameStoreRepo implements GameStoreRepoI {
   addResourceToInventory(type: string, value: number): void {
     const { storeAddResourceToInventory } = this.store
     // move more logic into here from the store for this func
+
     return storeAddResourceToInventory(type, value)
   }
 }

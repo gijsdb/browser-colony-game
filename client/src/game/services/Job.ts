@@ -1,8 +1,10 @@
+import { eventBus } from '../../eventBus'
 import { GameStoreRepoI } from '../../repositories/GameStoreRepo'
 import { Job, JobType } from '../entities/Job'
+import { ResourceServiceI } from './Resource'
 
 export interface JobServiceI {
-  createJob(type: JobType, x: number, y: number, resourceType: string, jobYield: number): Job
+  createJob(type: JobType, x: number, y: number, jobYield: number): Job
   assignJob(colonistId: string): Job | null
   completeJob(jobId: string): void
   update(delta: number): void
@@ -11,21 +13,26 @@ export interface JobServiceI {
 
 export class JobService implements JobServiceI {
   private jobs: Job[] = []
-
-  constructor(private gameStoreRepo: GameStoreRepoI) {}
+  // will need the resource service to handle the actual resource removal and inventory addition
+  constructor(
+    private gameStoreRepo: GameStoreRepoI,
+    private resourceService: ResourceServiceI
+  ) {}
 
   update(delta: number) {
     this.jobs = this.jobs.filter((job) => !job.isCompleted)
   }
 
-  createJob(type: JobType, x: number, y: number, resourceType: string, jobYield: number): Job {
+  createJob(type: JobType, x: number, y: number, jobYield: number): Job {
+    // Needs resource ID or reference to the resource entity..
+    let resource = this.resourceService.getResourceByXY(x, y)
     const job = new Job(
       this.generateJobId(),
       type,
       x,
       y,
       this.getJobDuration(type),
-      resourceType,
+      resource!.id || 0, // Fallback to 0 if resource is not found Not ideal
       jobYield
     )
     this.jobs.push(job)
@@ -43,8 +50,10 @@ export class JobService implements JobServiceI {
   completeJob(jobId: string) {
     const job = this.jobs.find((j) => j.id === jobId)
     if (job) {
-      job.isCompleted = true
-      this.gameStoreRepo.addResourceToInventory(job.resourceType, job.jobYield)
+      if (job.type === 'harvest') {
+        let resource = this.resourceService.getResourceById(job.resourceID)
+        this.resourceService.harvestResource(resource!)
+      }
     }
   }
 
